@@ -49,45 +49,45 @@
 /* ═══════════════════════════════════════════
    CONFIG  —  replace with your Supabase creds
 ═══════════════════════════════════════════ */
-const SUPABASE_URL      = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_URL = 'https://jfpyxtrutbwnithepezr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_kpU9p3-TYgxm8LF_yxJ7Pw_yi7Gn3Ok';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════ */
 const DEFAULT_RATE = 11;
-const LS_PREFIX    = 'tl_';
-const MONTHS_BG    = [
-  'Януари','Февруари','Март','Април','Май','Юни',
-  'Юли','Август','Септември','Октомври','Ноември','Декември'
+const LS_PREFIX = 'tl_';
+const MONTHS_BG = [
+  'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
+  'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
 ];
 const BADGES_DEF = [
-  { id: 'h100',  label: '💪 100+ часа', cls: 'gold',   check: (h) => h >= 100 },
-  { id: 'h160',  label: '🏆 160+ часа', cls: 'gold',   check: (h) => h >= 160 },
-  { id: 'h200',  label: '🚀 200+ часа', cls: 'purple', check: (h) => h >= 200 },
-  { id: 'd20',   label: '📅 20+ дни',   cls: 'green',  check: (h, d) => d >= 20 },
-  { id: 'str5',  label: '🔥 5 дни подред', cls: 'gold', check: (h, d, streak) => streak >= 5 },
+  { id: 'h100', label: '💪 100+ часа', cls: 'gold', check: (h) => h >= 100 },
+  { id: 'h160', label: '🏆 160+ часа', cls: 'gold', check: (h) => h >= 160 },
+  { id: 'h200', label: '🚀 200+ часа', cls: 'purple', check: (h) => h >= 200 },
+  { id: 'd20', label: '📅 20+ дни', cls: 'green', check: (h, d) => d >= 20 },
+  { id: 'str5', label: '🔥 5 дни подред', cls: 'gold', check: (h, d, streak) => streak >= 5 },
 ];
 
 /* ═══════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════ */
 const state = {
-  user:        null,   // Supabase user object
-  profile:     null,   // user_profiles row
-  demoMode:    false,
-  isOnline:    navigator.onLine,
+  user: null,   // Supabase user object
+  profile: null,   // user_profiles row
+  demoMode: false,
+  isOnline: navigator.onLine,
 
-  viewYear:    new Date().getFullYear(),
-  viewMonth:   new Date().getMonth(),
-  darkMode:    true,
-  activeTab:   'dashboard',
-  activeFilter:'all',
+  viewYear: new Date().getFullYear(),
+  viewMonth: new Date().getMonth(),
+  darkMode: true,
+  activeTab: 'dashboard',
+  activeFilter: 'all',
   activeShift: 'normal',  // for hour modal
-  modalDay:    null,
+  modalDay: null,
 
   // cached month entries: { "YYYY-MM-DD": { hours, rate, shift_type } }
-  entries:     {},
+  entries: {},
 
   charts: { bar: null, line: null, salary: null, shift: null, mini: null },
 };
@@ -170,8 +170,8 @@ async function dbLoadEntries(year, month) {
     return LS.loadEntries(uid, year, month);
   }
   try {
-    const start = `${year}-${String(month+1).padStart(2,'0')}-01`;
-    const end   = `${year}-${String(month+1).padStart(2,'0')}-31`;
+    const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const end = `${year}-${String(month + 1).padStart(2, '0')}-31`;
     const { data, error } = await sb.from('work_entries')
       .select('day_key,hours,rate,shift_type')
       .eq('user_id', uid)
@@ -335,10 +335,10 @@ function filterEntries(entries, filter) {
   if (filter === 'all') return entries;
   return Object.fromEntries(
     Object.entries(entries).filter(([dk, v]) => {
-      if (filter === '6')       return v.hours === 6;
-      if (filter === '12')      return v.hours === 12;
+      if (filter === '6') return v.hours === 6;
+      if (filter === '12') return v.hours === 12;
       if (filter === 'weekend') return v.shift_type === 'weekend';
-      if (filter === 'overtime')return v.shift_type === 'overtime';
+      if (filter === 'overtime') return v.shift_type === 'overtime';
       return true;
     })
   );
@@ -390,7 +390,7 @@ async function registerUser(email, password, name, rate) {
 
 async function logoutUser() {
   if (sb) await sb.auth.signOut();
-  state.user    = null;
+  state.user = null;
   state.profile = null;
   state.demoMode = false;
   showAuthScreen();
@@ -447,9 +447,9 @@ async function loadCurrentEntries() {
 ═══════════════════════════════════════════ */
 function applyAccentColor(color) {
   // Parse hex to rgb
-  const r = parseInt(color.slice(1,3),16);
-  const g = parseInt(color.slice(3,5),16);
-  const b = parseInt(color.slice(5,7),16);
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
   document.documentElement.style.setProperty('--accent', color);
   document.documentElement.style.setProperty('--accent-rgb', `${r},${g},${b}`);
   // Update avatars
@@ -464,15 +464,15 @@ function applyAccentColor(color) {
 ═══════════════════════════════════════════ */
 async function renderDashboard() {
   const filtered = filterEntries(state.entries, state.activeFilter);
-  const total  = sumHours(filtered);
+  const total = sumHours(filtered);
   const salary = sumSalary(state.entries); // salary always from all entries (unfiltered)
-  const days   = countDays(filtered);
-  const avg    = days > 0 ? total / days : 0;
+  const days = countDays(filtered);
+  const avg = days > 0 ? total / days : 0;
 
-  animateValue(document.getElementById('statHours'),  fmt(total));
+  animateValue(document.getElementById('statHours'), fmt(total));
   animateValue(document.getElementById('statSalary'), `${fmt(salary)} лв.`);
-  animateValue(document.getElementById('statDays'),   days);
-  animateValue(document.getElementById('statAvg'),    fmt(avg));
+  animateValue(document.getElementById('statDays'), days);
+  animateValue(document.getElementById('statAvg'), fmt(avg));
 
   const rate = state.profile?.hourly_rate || DEFAULT_RATE;
   document.getElementById('statRateSub').textContent = `при ${fmt(rate)} лв./час`;
@@ -486,9 +486,9 @@ async function renderDashboard() {
 /* ── Goal Progress ── */
 function renderGoalProgress(total) {
   const goal = state.profile?.monthly_goal || 160;
-  const pct  = Math.min(100, (total / goal) * 100);
-  document.getElementById('goalFill').style.width  = pct + '%';
-  document.getElementById('goalPct').textContent   = pct.toFixed(1) + '%';
+  const pct = Math.min(100, (total / goal) * 100);
+  document.getElementById('goalFill').style.width = pct + '%';
+  document.getElementById('goalPct').textContent = pct.toFixed(1) + '%';
   document.getElementById('goalValue').textContent = `${fmt(total)} / ${goal} ч`;
 }
 
@@ -517,7 +517,7 @@ function renderMiniChart() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     labels.push(dk.slice(8)); // day number
     const entry = state.entries[dk];
     values.push(entry ? entry.hours : 0);
@@ -544,8 +544,10 @@ function renderMiniChart() {
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw}ч` } } },
       scales: {
         x: { grid: { display: false }, ticks: { color: isDark ? '#7777aa' : '#5555aa', font: { size: 10 } } },
-        y: { beginAtZero: true, grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-             ticks: { color: isDark ? '#7777aa' : '#5555aa', font: { size: 10 } } }
+        y: {
+          beginAtZero: true, grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+          ticks: { color: isDark ? '#7777aa' : '#5555aa', font: { size: 10 } }
+        }
       }
     }
   });
@@ -578,11 +580,11 @@ function renderCalendar() {
 
   // Day cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const dk     = dayKeyStr(year, month, d);
-    const entry  = state.entries[dk];
-    const hrs    = entry?.hours || 0;
-    const shift  = entry?.shift_type || 'normal';
-    const dow    = new Date(year, month, d).getDay(); // 0=Sun,6=Sat
+    const dk = dayKeyStr(year, month, d);
+    const entry = state.entries[dk];
+    const hrs = entry?.hours || 0;
+    const shift = entry?.shift_type || 'normal';
+    const dow = new Date(year, month, d).getDay(); // 0=Sun,6=Sat
     const isWeekend = (dow === 0 || dow === 6);
     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
 
@@ -628,7 +630,7 @@ function openHourModal(dk, dayNum) {
   const curShift = entry?.shift_type || 'normal';
 
   document.getElementById('modalTitle').textContent = existing > 0 ? `Редактирай — ${fmt(existing)}ч` : 'Добави часове';
-  document.getElementById('modalDate').textContent  = `${dayNum} ${MONTHS_BG[m - 1]} ${y}`;
+  document.getElementById('modalDate').textContent = `${dayNum} ${MONTHS_BG[m - 1]} ${y}`;
 
   // Shift tags
   state.activeShift = curShift;
@@ -669,7 +671,7 @@ async function saveHours(hours) {
    HISTORY
 ═══════════════════════════════════════════ */
 async function populateHistorySelect() {
-  const sel  = document.getElementById('historySelect');
+  const sel = document.getElementById('historySelect');
   const keys = await dbAllMonthKeys();
   const curYM = ymStr(state.viewYear, state.viewMonth);
   const set = new Set([...keys, curYM]);
@@ -695,10 +697,10 @@ async function renderHistoryDetail(ym) {
   if (!ym) return;
   const [y, m] = ym.split('-').map(Number);
   const entries = await dbLoadEntries(y, m - 1);
-  const total   = sumHours(entries);
-  const salary  = sumSalary(entries);
-  const days    = countDays(entries);
-  const detail  = document.getElementById('historyDetail');
+  const total = sumHours(entries);
+  const salary = sumSalary(entries);
+  const days = countDays(entries);
+  const detail = document.getElementById('historyDetail');
 
   if (days === 0) {
     detail.innerHTML = '<p class="empty-state">Няма данни за избрания месец.</p>';
@@ -711,7 +713,7 @@ async function renderHistoryDetail(ym) {
     const v = entries[dk];
     const shiftLabel = { normal: '—', overtime: '🔴 Извън.', weekend: '🟣 Уикенд' }[v.shift_type] || '—';
     return `<tr>
-      <td>${d} ${MONTHS_BG[m-1]} ${y}</td>
+      <td>${d} ${MONTHS_BG[m - 1]} ${y}</td>
       <td>${fmt(v.hours)} ч</td>
       <td>${fmt(v.rate || DEFAULT_RATE)} лв.</td>
       <td>${fmt(v.hours * (v.rate || DEFAULT_RATE))} лв.</td>
@@ -724,7 +726,7 @@ async function renderHistoryDetail(ym) {
       <div class="history-stat"><div class="hs-label">Общо часове</div><div class="hs-value">${fmt(total)}</div></div>
       <div class="history-stat"><div class="hs-label">Заплата</div><div class="hs-value">${fmt(salary)} лв.</div></div>
       <div class="history-stat"><div class="hs-label">Работни дни</div><div class="hs-value">${days}</div></div>
-      <div class="history-stat"><div class="hs-label">Среден</div><div class="hs-value">${fmt(days > 0 ? total/days : 0)} ч/ден</div></div>
+      <div class="history-stat"><div class="hs-label">Среден</div><div class="hs-value">${fmt(days > 0 ? total / days : 0)} ч/ден</div></div>
     </div>
     <table class="history-table">
       <thead><tr><th>Дата</th><th>Часове</th><th>Ставка</th><th>Заплата</th><th>Смяна</th></tr></thead>
@@ -743,8 +745,8 @@ async function renderCharts() {
 
 function chartBaseOpts(xLabel, yLabel) {
   const isDark = document.body.classList.contains('dark-mode');
-  const grid  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
-  const tick  = isDark ? '#7777aa' : '#5555aa';
+  const grid = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+  const tick = isDark ? '#7777aa' : '#5555aa';
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: {
@@ -798,11 +800,13 @@ async function renderLineChart() {
   if (state.charts.line) state.charts.line.destroy();
   state.charts.line = new Chart(ctxL, {
     type: 'line',
-    data: { labels, datasets: [{
-      label: 'Часове', data: valH, borderColor: '#3ecf8e',
-      backgroundColor: 'rgba(62,207,142,0.10)', borderWidth: 2.5,
-      pointBackgroundColor: '#3ecf8e', pointRadius: 5, tension: 0.4, fill: true,
-    }]},
+    data: {
+      labels, datasets: [{
+        label: 'Часове', data: valH, borderColor: '#3ecf8e',
+        backgroundColor: 'rgba(62,207,142,0.10)', borderWidth: 2.5,
+        pointBackgroundColor: '#3ecf8e', pointRadius: 5, tension: 0.4, fill: true,
+      }]
+    },
     options: chartBaseOpts('Месец', 'Часове'),
   });
 
@@ -810,10 +814,12 @@ async function renderLineChart() {
   if (state.charts.salary) state.charts.salary.destroy();
   state.charts.salary = new Chart(ctxS, {
     type: 'bar',
-    data: { labels, datasets: [{
-      label: 'Заплата', data: valS, backgroundColor: 'rgba(176,139,255,0.7)',
-      borderColor: '#b08bff', borderWidth: 2, borderRadius: 6
-    }]},
+    data: {
+      labels, datasets: [{
+        label: 'Заплата', data: valS, backgroundColor: 'rgba(176,139,255,0.7)',
+        borderColor: '#b08bff', borderWidth: 2, borderRadius: 6
+      }]
+    },
     options: chartBaseOpts('Месец', 'лв.'),
   });
 
@@ -826,7 +832,8 @@ async function renderLineChart() {
     type: 'doughnut',
     data: {
       labels: ['Нормален', 'Извънреден', 'Уикенд'],
-      datasets: [{ data: [shiftCounts.normal, shiftCounts.overtime, shiftCounts.weekend],
+      datasets: [{
+        data: [shiftCounts.normal, shiftCounts.overtime, shiftCounts.weekend],
         backgroundColor: ['rgba(79,141,255,0.8)', 'rgba(255,92,122,0.8)', 'rgba(176,139,255,0.8)'],
         borderColor: ['#4f8dff', '#ff5c7a', '#b08bff'], borderWidth: 2,
       }]
@@ -844,7 +851,7 @@ async function renderLineChart() {
 function renderProfile() {
   if (!state.profile) return;
   const p = state.profile;
-  const initials = (p.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  const initials = (p.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   document.querySelectorAll('.user-avatar').forEach(el => el.textContent = initials);
   const pa = document.getElementById('profileAvatar');
@@ -891,8 +898,8 @@ function renderProfile() {
     if ('Notification' in window) {
       const perm = Notification.permission;
       ns.textContent = perm === 'granted' ? '✅ Известията са активирани' :
-                       perm === 'denied'  ? '❌ Известията са блокирани' :
-                                            '⚪ Известията не са активирани';
+        perm === 'denied' ? '❌ Известията са блокирани' :
+          '⚪ Известията не са активирани';
     } else {
       ns.textContent = '⚠️ Браузърът не поддържа известия';
     }
@@ -925,14 +932,14 @@ function exportCSV() {
   const { viewYear: year, viewMonth: month } = state;
   const entries = state.entries;
   const ym = ymStr(year, month);
-  const total  = sumHours(entries);
+  const total = sumHours(entries);
   const salary = sumSalary(entries);
 
   let csv = '\uFEFFДата,Часове,Ставка (лв.),Заплата (лв.),Тип смяна\n';
   Object.keys(entries).sort().forEach(dk => {
     const v = entries[dk];
     const shiftBG = { normal: 'Нормален', overtime: 'Извънреден', weekend: 'Уикенд' }[v.shift_type] || 'Нормален';
-    csv += `${dk},${fmt(v.hours)},${fmt(v.rate || DEFAULT_RATE)},${fmt(v.hours*(v.rate||DEFAULT_RATE))},${shiftBG}\n`;
+    csv += `${dk},${fmt(v.hours)},${fmt(v.rate || DEFAULT_RATE)},${fmt(v.hours * (v.rate || DEFAULT_RATE))},${shiftBG}\n`;
   });
   csv += `\nОБЩО,${fmt(total)},,${fmt(salary)},\n`;
 
@@ -951,7 +958,7 @@ function exportPDF() {
     const { viewYear: year, viewMonth: month } = state;
     const entries = state.entries;
     const ym = ymStr(year, month);
-    const total  = sumHours(entries);
+    const total = sumHours(entries);
     const salary = sumSalary(entries);
     const monthName = `${MONTHS_BG[month]} ${year}`;
     const sorted = Object.keys(entries).sort();
@@ -978,9 +985,9 @@ function exportPDF() {
 
     // Summary cards
     const boxes = [
-      { label: 'Общо часове', value: `${fmt(total)} ч`, color: [79,141,255] },
-      { label: 'Заплата',     value: `${fmt(salary)} лв.`, color: [62,207,142] },
-      { label: 'Работни дни', value: countDays(entries), color: [255,179,71] },
+      { label: 'Общо часове', value: `${fmt(total)} ч`, color: [79, 141, 255] },
+      { label: 'Заплата', value: `${fmt(salary)} лв.`, color: [62, 207, 142] },
+      { label: 'Работни дни', value: countDays(entries), color: [255, 179, 71] },
     ];
     let bx = 14;
     boxes.forEach(b => {
@@ -989,7 +996,7 @@ function exportPDF() {
       doc.setDrawColor(...b.color); doc.setLineWidth(0.5);
       doc.roundedRect(bx, 50, 58, 22, 4, 4, 'S');
       doc.setFontSize(7); doc.setFont('helvetica', 'normal');
-      doc.setTextColor(119,119,170);
+      doc.setTextColor(119, 119, 170);
       doc.text(b.label, bx + 4, 56);
       doc.setFontSize(14); doc.setFont('helvetica', 'bold');
       doc.setTextColor(...b.color);
@@ -1001,35 +1008,35 @@ function exportPDF() {
     const tt = 80;
     doc.setFillColor(20, 20, 40);
     doc.rect(14, tt, 182, 8, 'F');
-    doc.setTextColor(160,160,200); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text('Дата',18,tt+5.5); doc.text('Часове',70,tt+5.5);
-    doc.text('Ставка',100,tt+5.5); doc.text('Заплата',132,tt+5.5); doc.text('Смяна',168,tt+5.5);
+    doc.setTextColor(160, 160, 200); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+    doc.text('Дата', 18, tt + 5.5); doc.text('Часове', 70, tt + 5.5);
+    doc.text('Ставка', 100, tt + 5.5); doc.text('Заплата', 132, tt + 5.5); doc.text('Смяна', 168, tt + 5.5);
 
     let ty = tt + 8;
-    const shiftLabel = { normal:'Нормален', overtime:'Извънреден', weekend:'Уикенд' };
+    const shiftLabel = { normal: 'Нормален', overtime: 'Извънреден', weekend: 'Уикенд' };
     sorted.forEach((dk, i) => {
       const v = entries[dk];
-      if (i % 2 === 0) { doc.setFillColor(16,16,30); doc.rect(14,ty,182,7,'F'); }
-      doc.setTextColor(200,200,220); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-      doc.text(dk,18,ty+4.8);
-      doc.text(`${fmt(v.hours)} ч`,70,ty+4.8);
-      doc.text(`${fmt(v.rate||DEFAULT_RATE)} лв.`,100,ty+4.8);
-      doc.text(`${fmt(v.hours*(v.rate||DEFAULT_RATE))} лв.`,132,ty+4.8);
-      doc.text(shiftLabel[v.shift_type]||'Нормален',168,ty+4.8);
+      if (i % 2 === 0) { doc.setFillColor(16, 16, 30); doc.rect(14, ty, 182, 7, 'F'); }
+      doc.setTextColor(200, 200, 220); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+      doc.text(dk, 18, ty + 4.8);
+      doc.text(`${fmt(v.hours)} ч`, 70, ty + 4.8);
+      doc.text(`${fmt(v.rate || DEFAULT_RATE)} лв.`, 100, ty + 4.8);
+      doc.text(`${fmt(v.hours * (v.rate || DEFAULT_RATE))} лв.`, 132, ty + 4.8);
+      doc.text(shiftLabel[v.shift_type] || 'Нормален', 168, ty + 4.8);
       ty += 7;
       if (ty > 272) { doc.addPage(); ty = 20; }
     });
 
     // Footer
     ty += 3;
-    doc.setDrawColor(79,141,255); doc.setLineWidth(0.5); doc.line(14,ty,196,ty);
+    doc.setDrawColor(79, 141, 255); doc.setLineWidth(0.5); doc.line(14, ty, 196, ty);
     ty += 7;
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(79,141,255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(79, 141, 255);
     doc.text(`ОБЩО: ${fmt(total)} ч = ${fmt(salary)} лв.`, 18, ty);
 
     doc.save(`work-hours-${ym}.pdf`);
     toast('✓ PDF изтеглен', 'success');
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     toast('Грешка при PDF генерирането', 'error');
   }
@@ -1053,10 +1060,10 @@ function exportXLSX() {
       ['Дата', 'Часове', 'Ставка (лв./ч)', 'Заплата (лв.)', 'Тип смяна'],
     ];
 
-    const shiftLabel = { normal:'Нормален', overtime:'Извънреден', weekend:'Уикенд' };
+    const shiftLabel = { normal: 'Нормален', overtime: 'Извънреден', weekend: 'Уикенд' };
     sorted.forEach(dk => {
       const v = entries[dk];
-      wsData.push([dk, v.hours, v.rate||DEFAULT_RATE, v.hours*(v.rate||DEFAULT_RATE), shiftLabel[v.shift_type]||'Нормален']);
+      wsData.push([dk, v.hours, v.rate || DEFAULT_RATE, v.hours * (v.rate || DEFAULT_RATE), shiftLabel[v.shift_type] || 'Нормален']);
     });
 
     wsData.push([]);
@@ -1065,13 +1072,13 @@ function exportXLSX() {
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
     // Column widths
-    ws['!cols'] = [{ wch:14 }, { wch:10 }, { wch:14 }, { wch:14 }, { wch:14 }];
+    ws['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, monthName);
     XLSX.writeFile(wb, `work-hours-${ym}.xlsx`);
     toast('✓ Excel изтеглен', 'success');
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     toast('Грешка при Excel генерирането', 'error');
   }
@@ -1110,7 +1117,7 @@ function checkMissedDay() {
   // Check if yesterday has no entry
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  const yk = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  const yk = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
   const entry = state.entries[yk];
   if (!entry || entry.hours <= 0) {
     new Notification('TimeLedger Pro ⏱', {
@@ -1150,10 +1157,10 @@ async function switchTab(tabId) {
   document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add('active');
 
   if (tabId === 'dashboard') await renderDashboard();
-  if (tabId === 'calendar')  renderCalendar();
-  if (tabId === 'history')   await populateHistorySelect();
-  if (tabId === 'charts')    await renderCharts();
-  if (tabId === 'profile')   renderProfile();
+  if (tabId === 'calendar') renderCalendar();
+  if (tabId === 'history') await populateHistorySelect();
+  if (tabId === 'charts') await renderCharts();
+  if (tabId === 'profile') renderProfile();
 }
 
 /* ═══════════════════════════════════════════
@@ -1161,7 +1168,7 @@ async function switchTab(tabId) {
 ═══════════════════════════════════════════ */
 function applyTheme(dark) {
   state.darkMode = dark;
-  document.body.classList.toggle('dark-mode',  dark);
+  document.body.classList.toggle('dark-mode', dark);
   document.body.classList.toggle('light-mode', !dark);
   document.getElementById('darkToggle').textContent = dark ? '🌙' : '☀️';
   LS.saveSettings({ ...LS.loadSettings(), darkMode: dark });
@@ -1173,10 +1180,10 @@ function applyTheme(dark) {
 async function changeMonth(delta) {
   let m = state.viewMonth + delta;
   let y = state.viewYear;
-  if (m > 11) { m = 0;  y++; }
-  if (m < 0)  { m = 11; y--; }
+  if (m > 11) { m = 0; y++; }
+  if (m < 0) { m = 11; y--; }
   state.viewMonth = m;
-  state.viewYear  = y;
+  state.viewYear = y;
   state.entries = await dbLoadEntries(y, m);
   await refreshAll();
 }
@@ -1187,7 +1194,7 @@ async function changeMonth(delta) {
 async function refreshAll() {
   if (state.activeTab === 'dashboard' || true) await renderDashboard();
   renderCalendar();
-  if (state.activeTab === 'charts')  await renderCharts();
+  if (state.activeTab === 'charts') await renderCharts();
   if (state.activeTab === 'history') await populateHistorySelect();
 }
 
@@ -1221,8 +1228,8 @@ function wireAuthEvents() {
   document.getElementById('loginBtn').addEventListener('click', async () => {
     const btn = document.getElementById('loginBtn');
     const email = document.getElementById('loginEmail').value.trim();
-    const pass  = document.getElementById('loginPassword').value;
-    const msg   = document.getElementById('authMsg');
+    const pass = document.getElementById('loginPassword').value;
+    const msg = document.getElementById('authMsg');
     if (!email || !pass) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; return; }
     btn.innerHTML = '<span class="spinner"></span>';
     const { error } = await loginUser(email, pass);
@@ -1239,12 +1246,12 @@ function wireAuthEvents() {
 
   // Register
   document.getElementById('registerBtn').addEventListener('click', async () => {
-    const btn   = document.getElementById('registerBtn');
-    const name  = document.getElementById('regName').value.trim();
+    const btn = document.getElementById('registerBtn');
+    const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
-    const pass  = document.getElementById('regPassword').value;
-    const rate  = parseFloat(document.getElementById('regRate').value) || DEFAULT_RATE;
-    const msg   = document.getElementById('authMsg');
+    const pass = document.getElementById('regPassword').value;
+    const rate = parseFloat(document.getElementById('regRate').value) || DEFAULT_RATE;
+    const msg = document.getElementById('authMsg');
     if (!name || !email || !pass) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; return; }
     btn.innerHTML = '<span class="spinner"></span>';
     const { error } = await registerUser(email, pass, name, rate);
@@ -1325,10 +1332,10 @@ function wireAppEvents() {
   document.getElementById('resetMonth').addEventListener('click', confirmReset);
   document.getElementById('confirmOK').addEventListener('click', doReset);
   document.getElementById('confirmCancel').addEventListener('click', () =>
-    document.getElementById('confirmModal').setAttribute('hidden',''));
+    document.getElementById('confirmModal').setAttribute('hidden', ''));
   document.getElementById('confirmModal').addEventListener('click', e => {
     if (e.target === document.getElementById('confirmModal'))
-      document.getElementById('confirmModal').setAttribute('hidden','');
+      document.getElementById('confirmModal').setAttribute('hidden', '');
   });
 
   // History selector
@@ -1351,10 +1358,10 @@ function wireAppEvents() {
   });
   document.getElementById('goalModalSave').addEventListener('click', () => {
     saveGoal(document.getElementById('goalModalInput').value);
-    document.getElementById('goalModal').setAttribute('hidden','');
+    document.getElementById('goalModal').setAttribute('hidden', '');
   });
   document.getElementById('goalModalClose').addEventListener('click', () =>
-    document.getElementById('goalModal').setAttribute('hidden',''));
+    document.getElementById('goalModal').setAttribute('hidden', ''));
 
   // Profile — rate save
   document.getElementById('saveRateBtn').addEventListener('click', () => {
@@ -1379,7 +1386,7 @@ function wireAppEvents() {
 
   // Avatar color shortcut (cycles accent colors)
   document.getElementById('changeAvatarColor')?.addEventListener('click', () => {
-    const colors = ['#4f8dff','#3ecf8e','#ff6b6b','#ffb347','#b08bff','#ff7eb3','#00d4ff'];
+    const colors = ['#4f8dff', '#3ecf8e', '#ff6b6b', '#ffb347', '#b08bff', '#ff7eb3', '#00d4ff'];
     const cur = state.profile?.accent_color || '#4f8dff';
     const idx = colors.indexOf(cur);
     const next = colors[(idx + 1) % colors.length];
