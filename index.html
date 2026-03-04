@@ -1,164 +1,402 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f0f1a" />
-  <meta name="description" content="Проследявай работните си часове и заплата с лекота." />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="WorkTrack" />
-  <title>WorkTrack — Работни Часове</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0a0a14"/>
+  <meta name="description" content="TimeLedger Pro — проследявай работни часове, заплата и цели."/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="TimeLedger"/>
+  <title>TimeLedger Pro</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icons/icon-192.png"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <link rel="stylesheet" href="style.css"/>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- Chart.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <!-- jsPDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 </head>
 <body class="dark-mode">
 
-  <!-- ───── TOP NAV ───── -->
+<!-- ─── AUTH SCREEN ─── -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">⏱</span>
+      <h1>TimeLedger <span class="logo-pro">Pro</span></h1>
+      <p>Проследявай работното си време с прецизност</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth="login">Вход</button>
+      <button class="auth-tab" data-auth="register">Регистрация</button>
+    </div>
+
+    <div id="authLogin" class="auth-form active">
+      <div class="field-group">
+        <label>Имейл</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/>
+      </div>
+      <div class="field-group">
+        <label>Парола</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary btn-full" id="loginBtn">Влез в акаунта</button>
+      <button class="btn btn-ghost btn-full" id="demoBtn">🎭 Демо режим (без регистрация)</button>
+    </div>
+
+    <div id="authRegister" class="auth-form">
+      <div class="field-group">
+        <label>Пълно име</label>
+        <input type="text" id="regName" placeholder="Иван Иванов"/>
+      </div>
+      <div class="field-group">
+        <label>Имейл</label>
+        <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email"/>
+      </div>
+      <div class="field-group">
+        <label>Парола</label>
+        <input type="password" id="regPassword" placeholder="минимум 6 символа" autocomplete="new-password"/>
+      </div>
+      <div class="field-group">
+        <label>Часова ставка (лв./час)</label>
+        <input type="number" id="regRate" value="11" min="1" max="9999" step="0.5"/>
+      </div>
+      <button class="btn btn-primary btn-full" id="registerBtn">Създай акаунт</button>
+    </div>
+
+    <div id="authMsg" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="appShell" class="app-shell" hidden>
+
+  <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-brand">
       <span class="brand-icon">⏱</span>
-      <span class="brand-name">WorkTrack</span>
+      <span class="brand-name">TimeLedger <span class="logo-pro">Pro</span></span>
     </div>
-    <nav class="topbar-nav">
+    <nav class="topbar-nav" id="topNav">
       <button class="nav-btn active" data-tab="dashboard">Табло</button>
       <button class="nav-btn" data-tab="calendar">Календар</button>
       <button class="nav-btn" data-tab="history">История</button>
       <button class="nav-btn" data-tab="charts">Графики</button>
+      <button class="nav-btn" data-tab="profile">Профил</button>
     </nav>
-    <button id="darkToggle" class="icon-btn" aria-label="Превключи тема" title="Превключи тема">🌙</button>
+    <div class="topbar-actions">
+      <button id="darkToggle" class="icon-btn" title="Смени тема">🌙</button>
+      <button id="notifBtn" class="icon-btn" title="Известия">🔔</button>
+      <div class="avatar-wrap" id="avatarWrap">
+        <div class="user-avatar" id="topAvatar">?</div>
+      </div>
+    </div>
   </header>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offlineBanner" class="offline-banner" hidden>
+    📡 Офлайн режим — данните се запазват локално
+  </div>
 
   <main class="app-main">
 
-    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <!-- ════════ DASHBOARD ════════ -->
     <section id="tab-dashboard" class="tab-section active">
       <div class="section-header">
-        <h2>Табло</h2>
-        <div class="month-badge" id="dashMonthLabel">—</div>
+        <div>
+          <h2>Табло</h2>
+          <div class="month-badge" id="dashMonthLabel">—</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-sm btn-outline" id="dashPrev">‹</button>
+          <button class="btn btn-sm btn-outline" id="dashNext">›</button>
+        </div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card accent-blue">
+      <!-- Stats cards -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card accent-blue" id="cardHours">
+          <div class="stat-icon">⏰</div>
           <div class="stat-label">Работни часове</div>
           <div class="stat-value" id="statHours">0</div>
-          <div class="stat-sub">за текущия месец</div>
+          <div class="stat-sub">за месеца</div>
         </div>
-        <div class="stat-card accent-green">
+        <div class="stat-card accent-green" id="cardSalary">
+          <div class="stat-icon">💰</div>
           <div class="stat-label">Изработена заплата</div>
           <div class="stat-value" id="statSalary">0 лв.</div>
-          <div class="stat-sub">при 11 лв./час</div>
+          <div class="stat-sub" id="statRateSub">при — лв./час</div>
         </div>
-        <div class="stat-card accent-amber">
+        <div class="stat-card accent-amber" id="cardDays">
+          <div class="stat-icon">📅</div>
           <div class="stat-label">Работни дни</div>
           <div class="stat-value" id="statDays">0</div>
-          <div class="stat-sub">дни с въведени часове</div>
+          <div class="stat-sub">дни с часове</div>
         </div>
-        <div class="stat-card accent-purple">
-          <div class="stat-label">Среден дневен брой часове</div>
+        <div class="stat-card accent-purple" id="cardAvg">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">Среден дневен брой</div>
           <div class="stat-value" id="statAvg">0</div>
-          <div class="stat-sub">часа на работен ден</div>
+          <div class="stat-sub">часа / ден</div>
         </div>
       </div>
 
+      <!-- Monthly goal progress -->
+      <div class="goal-section glass-card">
+        <div class="goal-header">
+          <span>🎯 Месечна цел</span>
+          <span class="goal-value" id="goalValue">0 / 0 ч</span>
+          <button class="btn btn-sm btn-ghost" id="editGoalBtn">✏️ Промени</button>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="goalFill" style="width:0%"></div>
+        </div>
+        <div class="goal-pct" id="goalPct">0%</div>
+      </div>
+
+      <!-- Badges -->
+      <div class="badges-row" id="badgesRow"></div>
+
+      <!-- Filter row -->
+      <div class="filter-row">
+        <span class="filter-label">Филтър:</span>
+        <button class="filter-chip active" data-filter="all">Всички</button>
+        <button class="filter-chip" data-filter="6">6ч смени</button>
+        <button class="filter-chip" data-filter="12">12ч смени</button>
+        <button class="filter-chip" data-filter="weekend">Уикенд</button>
+        <button class="filter-chip" data-filter="overtime">Извънреден</button>
+      </div>
+
+      <!-- Quick chart preview -->
+      <div class="glass-card chart-preview-card">
+        <h3 class="card-title">Часове тази седмица</h3>
+        <div style="height:160px"><canvas id="weekMiniChart"></canvas></div>
+      </div>
+
+      <!-- Export row -->
       <div class="export-row">
-        <button class="btn btn-outline" id="exportCSV">⬇ Изтегли CSV</button>
-        <button class="btn btn-outline" id="exportPDF">⬇ Изтегли PDF</button>
-        <button class="btn btn-danger" id="resetMonth">🗑 Нулирай месеца</button>
+        <button class="btn btn-outline" id="exportCSV">⬇ CSV</button>
+        <button class="btn btn-outline" id="exportPDF">⬇ PDF</button>
+        <button class="btn btn-outline" id="exportXLSX">⬇ Excel</button>
+        <button class="btn btn-danger" id="resetMonth">🗑 Нулирай</button>
       </div>
     </section>
 
-    <!-- ═══════════ CALENDAR ═══════════ -->
+    <!-- ════════ CALENDAR ════════ -->
     <section id="tab-calendar" class="tab-section">
       <div class="section-header">
         <h2>Календар</h2>
         <div class="cal-nav">
-          <button class="icon-btn" id="prevMonth" aria-label="Предишен месец">‹</button>
+          <button class="icon-btn" id="prevMonth">‹</button>
           <span class="month-badge" id="calMonthLabel">—</span>
-          <button class="icon-btn" id="nextMonth" aria-label="Следващ месец">›</button>
+          <button class="icon-btn" id="nextMonth">›</button>
         </div>
       </div>
-      <div class="calendar-wrap">
+      <div class="calendar-wrap glass-card" id="calendarWrap">
         <div class="cal-weekdays">
           <span>Пон</span><span>Вт</span><span>Ср</span><span>Чет</span><span>Пет</span><span>Съб</span><span>Нед</span>
         </div>
         <div id="calGrid" class="cal-grid"></div>
       </div>
+      <div class="cal-legend">
+        <span class="legend-item"><span class="legend-dot worked"></span>Работен ден</span>
+        <span class="legend-item"><span class="legend-dot today"></span>Днес</span>
+        <span class="legend-item"><span class="legend-dot weekend"></span>Уикенд</span>
+        <span class="legend-item"><span class="legend-dot overtime"></span>Извънреден</span>
+      </div>
     </section>
 
-    <!-- ═══════════ HISTORY ═══════════ -->
+    <!-- ════════ HISTORY ════════ -->
     <section id="tab-history" class="tab-section">
       <div class="section-header">
-        <h2>История по месеци</h2>
-        <select id="historySelect" class="month-select" aria-label="Избери месец"></select>
+        <h2>История</h2>
+        <select id="historySelect" class="month-select"></select>
       </div>
-      <div id="historyDetail" class="history-detail">
+      <div id="historyDetail" class="history-detail glass-card">
         <p class="empty-state">Няма данни за избрания месец.</p>
       </div>
     </section>
 
-    <!-- ═══════════ CHARTS ═══════════ -->
+    <!-- ════════ CHARTS ════════ -->
     <section id="tab-charts" class="tab-section">
       <div class="section-header"><h2>Графики</h2></div>
       <div class="charts-grid">
-        <div class="chart-card">
-          <h3>Часове по дни (текущ месец)</h3>
+        <div class="chart-card glass-card">
+          <h3 class="card-title">Часове по дни (месец)</h3>
           <div class="chart-container"><canvas id="barChart"></canvas></div>
         </div>
-        <div class="chart-card">
-          <h3>Тренд на часовете (история)</h3>
+        <div class="chart-card glass-card">
+          <h3 class="card-title">Тренд (история)</h3>
           <div class="chart-container"><canvas id="lineChart"></canvas></div>
+        </div>
+        <div class="chart-card glass-card">
+          <h3 class="card-title">Заплата по месеци</h3>
+          <div class="chart-container"><canvas id="salaryChart"></canvas></div>
+        </div>
+        <div class="chart-card glass-card">
+          <h3 class="card-title">Разпределение на сменни типове</h3>
+          <div class="chart-container"><canvas id="shiftChart"></canvas></div>
         </div>
       </div>
     </section>
 
+    <!-- ════════ PROFILE ════════ -->
+    <section id="tab-profile" class="tab-section">
+      <div class="section-header"><h2>Профил и настройки</h2></div>
+      <div class="profile-grid">
+
+        <!-- Avatar + name card -->
+        <div class="glass-card profile-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profileAvatar">?</div>
+            <button class="avatar-edit-btn" id="changeAvatarColor" title="Смени цвят">🎨</button>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="profileName">—</div>
+            <div class="profile-email" id="profileEmail">—</div>
+            <div class="profile-role badge" id="profileRole">Потребител</div>
+          </div>
+        </div>
+
+        <!-- Rate settings card -->
+        <div class="glass-card settings-section">
+          <h3 class="settings-title">💰 Часова ставка</h3>
+          <p class="settings-desc">Промяната важи само за нови записи. Историческите записи запазват старата ставка.</p>
+          <div class="rate-display">
+            <span class="rate-current" id="currentRateDisplay">11 лв./час</span>
+            <span class="rate-badge">Текуща</span>
+          </div>
+          <div class="field-group">
+            <label>Нова часова ставка (лв./час)</label>
+            <div style="display:flex;gap:.5rem">
+              <input type="number" id="newRateInput" min="1" max="9999" step="0.5" placeholder="напр. 13.50"/>
+              <button class="btn btn-primary" id="saveRateBtn">Запази</button>
+            </div>
+          </div>
+          <div class="rate-history-title">История на ставките:</div>
+          <div id="rateHistoryList" class="rate-history-list"></div>
+        </div>
+
+        <!-- Monthly goal card -->
+        <div class="glass-card settings-section">
+          <h3 class="settings-title">🎯 Месечна цел</h3>
+          <div class="field-group">
+            <label>Целеви часове за месеца</label>
+            <div style="display:flex;gap:.5rem">
+              <input type="number" id="goalInput" min="1" max="744" value="160" placeholder="160"/>
+              <button class="btn btn-primary" id="saveGoalBtn">Запази</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications card -->
+        <div class="glass-card settings-section">
+          <h3 class="settings-title">🔔 Известия</h3>
+          <p class="settings-desc">Получавай напомняния да добавяш часовете си.</p>
+          <button class="btn btn-outline" id="enableNotifBtn">Активирай известия</button>
+          <div class="notif-status" id="notifStatus"></div>
+          <div class="field-group" style="margin-top:1rem">
+            <label>Час за напомняне</label>
+            <input type="time" id="reminderTime" value="20:00"/>
+          </div>
+        </div>
+
+        <!-- Accent color card -->
+        <div class="glass-card settings-section">
+          <h3 class="settings-title">🎨 Акцентен цвят</h3>
+          <div class="color-palette" id="colorPalette">
+            <button class="color-swatch active" data-color="#4f8dff" style="background:#4f8dff" title="Синьо"></button>
+            <button class="color-swatch" data-color="#3ecf8e" style="background:#3ecf8e" title="Зелено"></button>
+            <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b" title="Корал"></button>
+            <button class="color-swatch" data-color="#ffb347" style="background:#ffb347" title="Оранжево"></button>
+            <button class="color-swatch" data-color="#b08bff" style="background:#b08bff" title="Лилаво"></button>
+            <button class="color-swatch" data-color="#ff7eb3" style="background:#ff7eb3" title="Розово"></button>
+            <button class="color-swatch" data-color="#00d4ff" style="background:#00d4ff" title="Циан"></button>
+          </div>
+        </div>
+
+        <!-- Logout card -->
+        <div class="glass-card settings-section">
+          <h3 class="settings-title">⚙️ Акаунт</h3>
+          <button class="btn btn-danger" id="logoutBtn">Излез от акаунта</button>
+        </div>
+
+      </div>
+    </section>
+
   </main>
+</div>
 
-  <!-- ═══════════ HOUR MODAL ═══════════ -->
-  <div id="hourModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
-    <div class="modal">
-      <h3 id="modalTitle">Добави часове</h3>
-      <p id="modalDate" class="modal-date"></p>
-      <div class="modal-options">
-        <button class="btn btn-primary hour-preset" data-hours="6">6 часа</button>
-        <button class="btn btn-primary hour-preset" data-hours="8">8 часа</button>
-        <button class="btn btn-primary hour-preset" data-hours="12">12 часа</button>
-      </div>
-      <div class="modal-custom">
-        <label for="customHours">Персонализирани часове:</label>
-        <input type="number" id="customHours" min="0.5" max="24" step="0.5" placeholder="пр. 7.5" />
-        <button class="btn btn-outline" id="customSave">Запази</button>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" id="clearDay">🗑 Изчисти деня</button>
-        <button class="btn btn-ghost" id="closeModal">Отказ</button>
-      </div>
+<!-- ══ HOUR MODAL ══ -->
+<div id="hourModal" class="modal-overlay" hidden role="dialog" aria-modal="true">
+  <div class="modal" id="hourModalInner">
+    <h3 id="modalTitle">Добави часове</h3>
+    <p id="modalDate" class="modal-date"></p>
+    <div class="shift-tags" id="shiftTags">
+      <button class="shift-tag active" data-shift="normal">Нормален</button>
+      <button class="shift-tag" data-shift="overtime">Извънреден</button>
+      <button class="shift-tag" data-shift="weekend">Уикенд</button>
+    </div>
+    <div class="modal-options">
+      <button class="btn btn-primary hour-preset" data-hours="6">6ч</button>
+      <button class="btn btn-primary hour-preset" data-hours="8">8ч</button>
+      <button class="btn btn-primary hour-preset" data-hours="12">12ч</button>
+    </div>
+    <div class="modal-custom">
+      <label for="customHours">Персонализирани часове:</label>
+      <input type="number" id="customHours" min="0.5" max="24" step="0.5" placeholder="напр. 7.5"/>
+      <button class="btn btn-outline" id="customSave">Запази</button>
+    </div>
+    <div class="modal-rate-note" id="modalRateNote"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="clearDay">🗑 Изчисти</button>
+      <button class="btn btn-ghost" id="closeModal">Отказ</button>
     </div>
   </div>
+</div>
 
-  <!-- ═══════════ CONFIRM MODAL ═══════════ -->
-  <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
-    <div class="modal">
-      <h3 id="confirmTitle">Потвърждение</h3>
-      <p id="confirmMsg"></p>
-      <div class="modal-footer">
-        <button class="btn btn-danger" id="confirmOK">Да, нулирай</button>
-        <button class="btn btn-ghost" id="confirmCancel">Отказ</button>
-      </div>
+<!-- ══ GOAL EDIT MODAL ══ -->
+<div id="goalModal" class="modal-overlay" hidden role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3>🎯 Промени месечна цел</h3>
+    <div class="field-group" style="margin-top:1rem">
+      <label>Целеви часове</label>
+      <input type="number" id="goalModalInput" min="1" max="744" placeholder="160"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="goalModalSave">Запази</button>
+      <button class="btn btn-ghost" id="goalModalClose">Отказ</button>
     </div>
   </div>
+</div>
 
-  <script src="script.js" defer></script>
+<!-- ══ CONFIRM MODAL ══ -->
+<div id="confirmModal" class="modal-overlay" hidden role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3 id="confirmTitle">Потвърждение</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="confirmOK">Да, продължи</button>
+      <button class="btn btn-ghost" id="confirmCancel">Отказ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="script.js" defer></script>
 </body>
 </html>
