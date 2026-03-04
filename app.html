@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a14" />
+    <meta name="description" content="TimeLedger Pro — Табло за управление." />
+    <title>TimeLedger Pro — Табло</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.6/dist/umd/supabase.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SheetJS (Excel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body class="dark-mode">
+
+    <div id="appShell" class="app-shell">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <div class="topbar-brand">
+                <span class="brand-icon">⏱</span>
+                <span class="brand-name">TimeLedger <span class="logo-pro">Pro</span></span>
+            </div>
+            <nav class="topbar-nav" id="topNav">
+                <button class="nav-btn active" data-tab="dashboard">Табло</button>
+                <button class="nav-btn" data-tab="calendar">Календар</button>
+                <button class="nav-btn" data-tab="history">История</button>
+                <button class="nav-btn" data-tab="charts">Графики</button>
+                <button class="nav-btn" data-tab="profile">Профил</button>
+            </nav>
+            <div class="topbar-actions">
+                <button id="darkToggle" class="icon-btn" title="Смени тема">🌙</button>
+                <button id="notifBtn" class="icon-btn" title="Известия">🔔</button>
+                <div class="avatar-wrap" id="avatarWrap">
+                    <div class="user-avatar" id="topAvatar">?</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- OFFLINE BANNER -->
+        <div id="offlineBanner" class="offline-banner" hidden>
+            📡 Офлайн режим — данните се запазват локално
+        </div>
+
+        <main class="app-main">
+
+            <!-- ════════ DASHBOARD ════════ -->
+            <section id="tab-dashboard" class="tab-section active">
+                <div class="section-header">
+                    <div>
+                        <h2>Табло</h2>
+                        <div class="month-badge" id="dashMonthLabel">—</div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline" id="dashPrev">‹</button>
+                        <button class="btn btn-sm btn-outline" id="dashNext">›</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card accent-blue" id="cardHours">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-label">Работни часове</div>
+                        <div class="stat-value" id="statHours">0</div>
+                        <div class="stat-sub">за месеца</div>
+                    </div>
+                    <div class="stat-card accent-green" id="cardSalary">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-label">Изработена заплата</div>
+                        <div class="stat-value" id="statSalary">0 лв.</div>
+                        <div class="stat-sub" id="statRateSub">при — лв./час</div>
+                    </div>
+                    <div class="stat-card accent-amber" id="cardDays">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-label">Работни дни</div>
+                        <div class="stat-value" id="statDays">0</div>
+                        <div class="stat-sub">дни с часове</div>
+                    </div>
+                    <div class="stat-card accent-purple" id="cardAvg">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">Среден дневен брой</div>
+                        <div class="stat-value" id="statAvg">0</div>
+                        <div class="stat-sub">часа / ден</div>
+                    </div>
+                </div>
+
+                <div class="goal-section glass-card">
+                    <div class="goal-header">
+                        <span>🎯 Месечна цел</span>
+                        <span class="goal-value" id="goalValue">0 / 0 ч</span>
+                        <button class="btn btn-sm btn-ghost" id="editGoalBtn">✏️ Промени</button>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="goalFill" style="width:0%"></div>
+                    </div>
+                    <div class="goal-pct" id="goalPct">0%</div>
+                </div>
+
+                <div class="badges-row" id="badgesRow"></div>
+
+                <div class="filter-row">
+                    <span class="filter-label">Филтър:</span>
+                    <button class="filter-chip active" data-filter="all">Всички</button>
+                    <button class="filter-chip" data-filter="6">6ч смени</button>
+                    <button class="filter-chip" data-filter="12">12ч смени</button>
+                    <button class="filter-chip" data-filter="weekend">Уикенд</button>
+                    <button class="filter-chip" data-filter="overtime">Извънреден</button>
+                </div>
+
+                <div class="glass-card chart-preview-card">
+                    <h3 class="card-title">Часове тази седмица</h3>
+                    <div style="height:160px"><canvas id="weekMiniChart"></canvas></div>
+                </div>
+
+                <div class="export-row">
+                    <button class="btn btn-outline" id="exportCSV">⬇ CSV</button>
+                    <button class="btn btn-outline" id="exportPDF">⬇ PDF</button>
+                    <button class="btn btn-outline" id="exportXLSX">⬇ Excel</button>
+                    <button class="btn btn-danger" id="resetMonth">🗑 Нулирай</button>
+                </div>
+            </section>
+
+            <!-- ════════ CALENDAR ════════ -->
+            <section id="tab-calendar" class="tab-section">
+                <div class="section-header">
+                    <h2>Календар</h2>
+                    <div class="cal-nav">
+                        <button class="icon-btn" id="prevMonth">‹</button>
+                        <span class="month-badge" id="calMonthLabel">—</span>
+                        <button class="icon-btn" id="nextMonth">›</button>
+                    </div>
+                </div>
+                <div class="calendar-wrap glass-card" id="calendarWrap">
+                    <div class="cal-weekdays">
+                        <span>Пон</span><span>Вт</span><span>Ср</span><span>Чет</span><span>Пет</span><span>Съб</span><span>Нед</span>
+                    </div>
+                    <div id="calGrid" class="cal-grid"></div>
+                </div>
+                <div class="cal-legend">
+                    <span class="legend-item"><span class="legend-dot worked"></span>Работен ден</span>
+                    <span class="legend-item"><span class="legend-dot today"></span>Днес</span>
+                    <span class="legend-item"><span class="legend-dot weekend"></span>Уикенд</span>
+                    <span class="legend-item"><span class="legend-dot overtime"></span>Извънреден</span>
+                </div>
+            </section>
+
+            <!-- ════════ HISTORY ════════ -->
+            <section id="tab-history" class="tab-section">
+                <div class="section-header">
+                    <h2>История</h2>
+                    <select id="historySelect" class="month-select"></select>
+                </div>
+                <div id="historyDetail" class="history-detail glass-card">
+                    <p class="empty-state">Няма данни за избрания месец.</p>
+                </div>
+            </section>
+
+            <!-- ════════ CHARTS ════════ -->
+            <section id="tab-charts" class="tab-section">
+                <div class="section-header">
+                    <h2>Графики</h2>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card glass-card">
+                        <h3 class="card-title">Часове по дни (месец)</h3>
+                        <div class="chart-container"><canvas id="barChart"></canvas></div>
+                    </div>
+                    <div class="chart-card glass-card">
+                        <h3 class="card-title">Тренд (история)</h3>
+                        <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                    </div>
+                    <div class="chart-card glass-card">
+                        <h3 class="card-title">Заплата по месеци</h3>
+                        <div class="chart-container"><canvas id="salaryChart"></canvas></div>
+                    </div>
+                    <div class="chart-card glass-card">
+                        <h3 class="card-title">Разпределение на сменни типове</h3>
+                        <div class="chart-container"><canvas id="shiftChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════ PROFILE ════════ -->
+            <section id="tab-profile" class="tab-section">
+                <div class="section-header">
+                    <h2>Профил и настройки</h2>
+                </div>
+                <div class="profile-grid">
+                    <div class="glass-card profile-card">
+                        <div class="profile-avatar-wrap">
+                            <div class="profile-avatar" id="profileAvatar">?</div>
+                            <button class="avatar-edit-btn" id="changeAvatarColor" title="Смени цвят">🎨</button>
+                        </div>
+                        <div class="profile-info">
+                            <div class="profile-name" id="profileName">—</div>
+                            <div class="profile-email" id="profileEmail">—</div>
+                            <div class="profile-role badge" id="profileRole">Потребител</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card settings-section">
+                        <h3 class="settings-title">💰 Часова ставка</h3>
+                        <div class="rate-display">
+                            <span class="rate-current" id="currentRateDisplay">11 лв./час</span>
+                            <span class="rate-badge">Текуща</span>
+                        </div>
+                        <div class="field-group">
+                            <label>Нова часова ставка (лв./час)</label>
+                            <div style="display:flex;gap:.5rem">
+                                <input type="number" id="newRateInput" min="1" max="9999" step="0.5"
+                                    placeholder="напр. 13.50" />
+                                <button class="btn btn-primary" id="saveRateBtn">Запази</button>
+                            </div>
+                        </div>
+                        <div id="rateHistoryList" class="rate-history-list"></div>
+                    </div>
+
+                    <div class="glass-card settings-section">
+                        <h3 class="settings-title">🎯 Месечна цел</h3>
+                        <div class="field-group">
+                            <label>Целеви часове за месеца</label>
+                            <div style="display:flex;gap:.5rem">
+                                <input type="number" id="goalInput" min="1" max="744" value="160" placeholder="160" />
+                                <button class="btn btn-primary" id="saveGoalBtn">Запази</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card settings-section">
+                        <h3 class="settings-title">🔔 Известия</h3>
+                        <button class="btn btn-outline" id="enableNotifBtn">Активирай известия</button>
+                        <div class="field-group" style="margin-top:1rem">
+                            <label>Час за напомняне</label>
+                            <input type="time" id="reminderTime" value="20:00" />
+                        </div>
+                    </div>
+
+                    <div class="glass-card settings-section">
+                        <h3 class="settings-title">🎨 Акцентен цвят</h3>
+                        <div class="color-palette" id="colorPalette">
+                            <button class="color-swatch active" data-color="#4f8dff"
+                                style="background:#4f8dff"></button>
+                            <button class="color-swatch" data-color="#3ecf8e" style="background:#3ecf8e"></button>
+                            <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b"></button>
+                            <button class="color-swatch" data-color="#ffb347" style="background:#ffb347"></button>
+                            <button class="color-swatch" data-color="#b08bff" style="background:#b08bff"></button>
+                            <button class="color-swatch" data-color="#ff7eb3" style="background:#ff7eb3"></button>
+                            <button class="color-swatch" data-color="#00d4ff" style="background:#00d4ff"></button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card settings-section">
+                        <h3 class="settings-title">⚙️ Акаунт</h3>
+                        <button class="btn btn-danger" id="logoutBtn">Излез от акаунта</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="hourModal" class="modal-overlay" hidden>
+        <div class="modal">
+            <h3 id="modalTitle">Добави часове</h3>
+            <p id="modalDate" class="modal-date"></p>
+            <div class="shift-tags">
+                <button class="shift-tag active" data-shift="normal">Нормален</button>
+                <button class="shift-tag" data-shift="overtime">Извънреден</button>
+                <button class="shift-tag" data-shift="weekend">Уикенд</button>
+            </div>
+            <div class="modal-options">
+                <button class="btn btn-primary hour-preset" data-hours="6">6ч</button>
+                <button class="btn btn-primary hour-preset" data-hours="8">8ч</button>
+                <button class="btn btn-primary hour-preset" data-hours="12">12ч</button>
+            </div>
+            <p id="modalRateNote" class="modal-rate-note"
+                style="text-align:center; font-size:0.8rem; margin:1rem 0; opacity:0.8;"></p>
+            <div class="modal-custom">
+                <input type="number" id="customHours" min="0.5" max="24" step="0.5" placeholder="Друго" />
+                <button class="btn btn-outline" id="customSave">Запази</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="clearDay">🗑 Изчисти</button>
+                <button class="btn btn-ghost" id="closeModal">Отказ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="goalModal" class="modal-overlay" hidden>
+        <div class="modal">
+            <h3>🎯 Месечна цел</h3>
+            <input type="number" id="goalModalInput" min="1" max="744" />
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="goalModalSave">Запази</button>
+                <button class="btn btn-ghost" id="goalModalClose">Отказ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay" hidden>
+        <div class="modal">
+            <h3 id="confirmTitle">Потвърждение</h3>
+            <p id="confirmMsg"></p>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirmOK">Да</button>
+                <button class="btn btn-ghost" id="confirmCancel">Не</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="script.js" defer></script>
+</body>
+
+</html>

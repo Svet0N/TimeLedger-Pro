@@ -3,10 +3,11 @@
  * Cache-First with Network-Update strategy
  */
 
-const CACHE   = 'timeleger-v2';
+const CACHE = 'timeleger-v3';
 const PRECACHE = [
   './',
   './index.html',
+  './app.html',
   './style.css',
   './script.js',
   './manifest.json',

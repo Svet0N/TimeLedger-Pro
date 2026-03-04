@@ -234,9 +234,17 @@ async function dbLoadProfile() {
     return LS.loadProfile(uid) || defaultProfile(uid);
   }
   try {
-    const { data, error } = await sb.from('user_profiles').select('*').eq('id', uid).single();
-    if (error && error.code !== 'PGRST116') throw error;
-    const profile = data || defaultProfile(uid);
+    const { data, error } = await sb.from('user_profiles').select('*').eq('id', uid).maybeSingle();
+    if (error) throw error;
+
+    // Fallback to local profile (created at registration) or default
+    const profile = data || LS.loadProfile(uid) || defaultProfile(uid);
+
+    // If not found in DB, push it to Supabase now that user is logged in
+    if (!data && profile.id === uid) {
+      await sb.from('user_profiles').upsert(profile);
+    }
+
     LS.saveProfile(uid, profile);
     return profile;
   } catch (e) {
@@ -375,8 +383,8 @@ async function registerUser(email, password, name, rate) {
   if (!sb) return { error: { message: 'Supabase не е конфигуриран.' } };
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error || !data.user) return { error };
-  // Create profile
-  await sb.from('user_profiles').insert({
+
+  const profileData = {
     id: data.user.id,
     full_name: name,
     hourly_rate: rate,
@@ -384,21 +392,32 @@ async function registerUser(email, password, name, rate) {
     monthly_goal: 160,
     role: 'user',
     rate_history: [{ rate, date: new Date().toISOString().split('T')[0] }],
-  });
+    notif_time: '20:00'
+  };
+
+  // Save locally in case email confirmation is required (no active session yet)
+  LS.saveProfile(data.user.id, profileData);
+
+  // If session is immediately available (email confirm off), insert to DB
+  if (data.session) {
+    await sb.from('user_profiles').insert(profileData);
+  }
+
   return { data };
 }
 
 async function logoutUser() {
+  LS.saveSettings({ ...LS.loadSettings(), demo_mode: false });
   if (sb) await sb.auth.signOut();
   state.user = null;
   state.profile = null;
   state.demoMode = false;
-  showAuthScreen();
+  window.location.href = 'index.html';
 }
 
 function enterDemoMode() {
   state.demoMode = true;
-  state.user = { id: 'demo', email: 'demo@timeleger.local' };
+  state.user = { id: 'demo', email: 'demo@timeledger.local' };
   state.profile = {
     id: 'demo',
     full_name: 'Демо Потребител',
@@ -409,20 +428,30 @@ function enterDemoMode() {
     rate_history: [{ rate: DEFAULT_RATE, date: new Date().toISOString().split('T')[0] }],
     notif_time: '20:00',
   };
-  bootApp();
+
+  if (window.location.pathname.includes('app.html')) {
+    bootApp();
+  } else {
+    LS.saveSettings({ ...LS.loadSettings(), demo_mode: true });
+    window.location.href = 'app.html';
+  }
 }
 
 /* ═══════════════════════════════════════════
    SCREEN MANAGEMENT
 ═══════════════════════════════════════════ */
 function showAuthScreen() {
-  document.getElementById('authScreen').style.display = '';
-  document.getElementById('appShell').setAttribute('hidden', '');
+  const auth = document.getElementById('authScreen');
+  const app = document.getElementById('appShell');
+  if (auth) auth.style.display = '';
+  if (app) app.setAttribute('hidden', '');
 }
 
 function showApp() {
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appShell').removeAttribute('hidden');
+  const auth = document.getElementById('authScreen');
+  const app = document.getElementById('appShell');
+  if (auth) auth.style.display = 'none';
+  if (app) app.removeAttribute('hidden');
 }
 
 /* ═══════════════════════════════════════════
@@ -640,7 +669,10 @@ function openHourModal(dk, dayNum) {
 
   document.getElementById('customHours').value = existing > 0 ? existing : '';
   const rate = state.profile?.hourly_rate || DEFAULT_RATE;
-  document.getElementById('modalRateNote').textContent = `Ставка: ${fmt(rate)} лв./час`;
+  const rateNote = document.getElementById('modalRateNote');
+  if (rateNote) {
+    rateNote.textContent = `Ставка: ${fmt(rate)} лв./час`;
+  }
 
   document.getElementById('hourModal').removeAttribute('hidden');
   setTimeout(() => document.getElementById('customHours').focus(), 50);
@@ -1170,7 +1202,8 @@ function applyTheme(dark) {
   state.darkMode = dark;
   document.body.classList.toggle('dark-mode', dark);
   document.body.classList.toggle('light-mode', !dark);
-  document.getElementById('darkToggle').textContent = dark ? '🌙' : '☀️';
+  const toggle = document.getElementById('darkToggle');
+  if (toggle) toggle.textContent = dark ? '🌙' : '☀️';
   LS.saveSettings({ ...LS.loadSettings(), darkMode: dark });
 }
 
@@ -1220,57 +1253,64 @@ function wireAuthEvents() {
       document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active'));
       document.querySelectorAll('.auth-form').forEach(x => x.classList.remove('active'));
       t.classList.add('active');
-      document.getElementById(`auth${t.dataset.auth.charAt(0).toUpperCase()}${t.dataset.auth.slice(1)}`).classList.add('active');
+      const targetId = `auth${t.dataset.auth.charAt(0).toUpperCase()}${t.dataset.auth.slice(1)}`;
+      document.getElementById(targetId)?.classList.add('active');
     });
   });
 
   // Login
-  document.getElementById('loginBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('loginBtn');
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value;
+  const loginBtn = document.getElementById('loginBtn');
+  loginBtn?.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail')?.value.trim();
+    const pass = document.getElementById('loginPassword')?.value;
     const msg = document.getElementById('authMsg');
-    if (!email || !pass) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; return; }
-    btn.innerHTML = '<span class="spinner"></span>';
+    if (!email || !pass) {
+      if (msg) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; }
+      return;
+    }
+    loginBtn.innerHTML = '<span class="spinner"></span>';
     const { error } = await loginUser(email, pass);
     if (error) {
-      msg.textContent = error.message;
-      msg.className = 'auth-msg error';
-      btn.textContent = 'Влез в акаунта';
+      if (msg) { msg.textContent = error.message; msg.className = 'auth-msg error'; }
+      loginBtn.textContent = 'Влез в акаунта';
     } else {
-      const { data: { user } } = await sb.auth.getUser();
-      state.user = user;
-      await bootApp();
+      window.location.href = 'app.html';
     }
   });
 
   // Register
-  document.getElementById('registerBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('registerBtn');
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const pass = document.getElementById('regPassword').value;
-    const rate = parseFloat(document.getElementById('regRate').value) || DEFAULT_RATE;
+  const regBtn = document.getElementById('registerBtn');
+  regBtn?.addEventListener('click', async () => {
+    const name = document.getElementById('regName')?.value.trim();
+    const email = document.getElementById('regEmail')?.value.trim();
+    const pass = document.getElementById('regPassword')?.value;
+    const rate = parseFloat(document.getElementById('regRate')?.value) || DEFAULT_RATE;
     const msg = document.getElementById('authMsg');
-    if (!name || !email || !pass) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; return; }
-    btn.innerHTML = '<span class="spinner"></span>';
+    if (!name || !email || !pass) {
+      if (msg) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; }
+      return;
+    }
+    regBtn.innerHTML = '<span class="spinner"></span>';
     const { error } = await registerUser(email, pass, name, rate);
     if (error) {
-      msg.textContent = error.message;
-      msg.className = 'auth-msg error';
-      btn.textContent = 'Създай акаунт';
+      if (msg) { msg.textContent = error.message; msg.className = 'auth-msg error'; }
+      regBtn.textContent = 'Създай акаунт';
     } else {
-      msg.textContent = '✓ Акаунтът е създаден! Провери имейла си за потвърждение.';
-      msg.className = 'auth-msg success';
-      btn.textContent = 'Създай акаунт';
+      if (msg) {
+        msg.textContent = '✓ Акаунтът е създаден! Провери имейла си за потвърждение.';
+        msg.className = 'auth-msg success';
+      }
+      regBtn.textContent = 'Създай акаунт';
     }
   });
 
   // Demo
-  document.getElementById('demoBtn').addEventListener('click', enterDemoMode);
+  document.getElementById('demoBtn')?.addEventListener('click', enterDemoMode);
 }
 
 function wireAppEvents() {
+  if (!document.getElementById('dashPrev')) return;
+
   // Nav tabs
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -1443,36 +1483,45 @@ function registerSW() {
    INIT
 ═══════════════════════════════════════════ */
 async function init() {
-  // Theme
+  const isAppPage = window.location.pathname.includes('app.html');
   const settings = LS.loadSettings();
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   applyTheme(typeof settings.darkMode === 'boolean' ? settings.darkMode : prefersDark);
 
-  // Supabase
   initSupabase();
 
-  wireAuthEvents();
-  wireAppEvents();
-  registerSW();
-
-  // Check existing Supabase session
-  if (sb) {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) {
-      state.user = session.user;
-      await bootApp();
-      return;
-    }
-    // Listen for auth state changes
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        state.user = session.user;
-        await bootApp();
-      }
-    });
+  if (isAppPage) {
+    wireAppEvents();
+  } else {
+    wireAuthEvents();
   }
 
-  showAuthScreen();
+  let session = null;
+  if (sb) {
+    try {
+      const { data, error } = await sb.auth.getSession();
+      if (!error) session = data?.session;
+    } catch (e) { console.warn('Session check failed:', e); }
+  }
+
+  const isDemo = settings.demo_mode === true;
+
+  if (isAppPage) {
+    if (session?.user || isDemo) {
+      state.user = session?.user || { id: 'demo', email: 'demo@timeledger.local' };
+      state.demoMode = isDemo;
+      await bootApp();
+    } else {
+      window.location.href = 'index.html';
+    }
+  } else {
+    // Auth page: if already logged in, go to app
+    if (session?.user || isDemo) {
+      window.location.href = 'app.html';
+    }
+  }
+
+  registerSW();
 }
 
 if (document.readyState === 'loading') {
