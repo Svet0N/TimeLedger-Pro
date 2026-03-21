@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0a0a14" />
     <meta name="description" content="Shifster Solo — Табло за управление." />
-    <title>Shifster Solo — Табло</title>
+    <title>Shifster Individual — Табло</title>
 
     <link rel="manifest" href="manifest.json" />
-    <link rel="icon" href="icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" href="icons/icon.png" />
+    <link rel="apple-touch-icon" href="icons/icon.png" />
     <link rel="stylesheet" href="style.css?v=7" />
 
     <!-- Supabase -->
@@ -35,8 +35,8 @@
         <!-- TOP BAR -->
         <header class="topbar">
             <div class="topbar-brand">
-                <span class="brand-icon">⏱</span>
-                <span class="brand-name">Shifster <span class="logo-solo">Solo</span></span>
+                <img src="icons/logo.png" class="logo-desktop" alt="Shifster Logo">
+                <img src="icons/icon.png" class="logo-mobile" alt="Shifster Icon">
             </div>
             <nav class="topbar-nav" id="topNav">
                 <button class="nav-btn active" data-tab="dashboard">Табло</button>
@@ -62,7 +62,10 @@
             <!-- ════════ DASHBOARD ════════ -->
             <section id="tab-dashboard" class="tab-section active">
                 <div class="section-header">
-                    <h2>Табло</h2>
+                    <div style="display:flex; align-items:center; gap:0.6rem">
+                        <h2>Табло</h2>
+                        <button class="btn btn-sm btn-ghost" onclick="startTutorial()" title="Стартирай туториал" style="font-size:1.1rem; opacity:0.5; padding:0 5px">❓</button>
+                    </div>
                     <div class="cal-nav">
                         <button class="icon-btn" id="dashPrev">‹</button>
                         <span class="month-badge" id="dashMonthLabel">—</span>
@@ -95,6 +98,20 @@
                 <div id="unconfirmedBanner" class="unconfirmed-banner" style="display:none">
                     <div class="unconfirmed-text"></div>
                     <div class="unconfirmed-actions"></div>
+                </div>
+
+                <!-- 🚀 DASHBOARD WELCOME BANNER (EMPTY STATE) -->
+                <div class="glass-card welcome-banner" id="dashWelcomeBanner" style="display:none; margin-bottom:1.5rem;">
+                    <div class="welcome-banner-content">
+                        <div class="welcome-rocket">🚀</div>
+                        <div class="welcome-text">
+                            <h4>Твоят Shifster е готов!</h4>
+                            <p>Вече създадохме персонални шаблони за <b id="welcomeRoleName"></b>.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btnStartFirstShift" style="box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4)">
+                        <span style="font-size:1.2rem; margin-right:0.4rem">+</span> Добави първата си смяна
+                    </button>
                 </div>
 
                 <div class="stats-grid" id="statsGrid">
@@ -148,7 +165,12 @@
 
                 <div class="glass-card chart-preview-card">
                     <h3 class="card-title">Часове тази седмица</h3>
-                    <div style="height:160px"><canvas id="weekMiniChart"></canvas></div>
+                    <div style="height:160px; position:relative; display:flex; align-items:center; justify-content:center;">
+                        <canvas id="weekMiniChart"></canvas>
+                        <div id="chartPlaceholderText" class="chart-placeholder" style="display:none">
+                            Тук ще видиш анализи, след като добавиш първите си часове.
+                        </div>
+                    </div>
                 </div>
 
                 <div class="export-row">
@@ -468,9 +490,46 @@
         </div>
     </div>
 
+    <!-- ════ TUTORIAL ════ -->
+    <div id="tutorialOverlay" class="tutorial-overlay" hidden>
+        <div id="tutorialSpotlight" class="tutorial-spotlight"></div>
+        <div id="tutorialTooltip" class="tutorial-tooltip glass-card">
+            <p id="tutorialText"></p>
+            <div class="tutorial-actions">
+                <span id="tutorialStepCount">1/3</span>
+                <button class="btn btn-primary btn-sm" id="btnTutorialNext">Напред →</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
 
-    <script src="script.js?v=7" defer></script>
+    <!-- ════ ONBOARDING ════ -->
+    <div id="onboardingOverlay" class="onboarding-overlay" hidden>
+        <div class="onboarding-card glass-card">
+            <div id="onboardingStep1">
+                <div class="onboarding-header">
+                    <h2>Добре дошъл! 👋</h2>
+                    <p>Кажи ни с какво се занимаваш, за да настроим Shifster за теб.</p>
+                </div>
+                <h3 class="onboarding-title">Избери твоята индустрия:</h3>
+                <div class="onboarding-grid" id="industryGrid"></div>
+            </div>
+
+            <div id="onboardingStep2" hidden>
+                <div class="onboarding-header">
+                    <h2>Твоята роля</h2>
+                    <p>Shifster ще създаде автоматични шаблони за твоята позиция.</p>
+                </div>
+                <div class="roles-container">
+                    <div id="rolesList" class="onboarding-roles"></div>
+                    <button class="btn btn-ghost btn-full" style="margin-top:1.5rem" onclick="onboardingBack()">⬅ Назад</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js?v=7"></script>
 </body>
 
 </html>

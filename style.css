@@ -149,12 +149,18 @@ body::before {
   filter: drop-shadow(0 0 20px var(--accent));
 }
 
-.auth-logo h1 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  margin-bottom: 0.3rem;
+.auth-logo {
+  text-align: center;
+  margin-bottom: 2rem;
 }
+
+.logo-auth {
+  display: block;
+  margin: 0 auto 0.5rem;
+  height: 56px;
+  width: auto;
+}
+
 
 .logo-solo {
   background: linear-gradient(135deg, var(--accent), var(--purple));
@@ -268,9 +274,23 @@ body.light-mode .topbar {
   flex-shrink: 0;
 }
 
-.brand-icon {
-  font-size: 1.25rem;
-  filter: drop-shadow(0 0 8px var(--accent));
+.logo-desktop {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+.logo-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .logo-desktop { display: none; }
+  .logo-mobile {
+    display: block;
+    height: 32px;
+    width: 32px;
+    border-radius: 8px; /* Овални ъгли за иконата */
+  }
 }
 
 .topbar-nav {
@@ -2322,3 +2342,272 @@ body.light-mode input {
     text-align: left;
   }
 }
+
+/* ═══════════════════════════════════════════
+   ONBOARDING
+═══════════════════════════════════════════ */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 20% 20%, rgba(79, 141, 255, 0.2), transparent),
+                    radial-gradient(circle at 80% 80%, rgba(176, 139, 255, 0.15), transparent);
+  z-index: 10000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.onboarding-card {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 24px;
+  animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.onboarding-header {
+  margin-bottom: 2.5rem;
+}
+
+.onboarding-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.onboarding-header p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.onboarding-title {
+  text-align: left;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+}
+
+.onboarding-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.onboarding-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.onboarding-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.onboarding-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.3));
+}
+
+.onboarding-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.onboarding-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.onboarding-role-btn {
+  justify-content: center;
+  font-size: 1rem;
+  padding: 1rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .onboarding-card {
+    padding: 2rem 1.25rem;
+  }
+  .onboarding-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD EMPTY STATE (WELCOME BANNER)
+═══════════════════════════════════════════ */
+.welcome-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.8rem 2rem;
+  background: linear-gradient(135deg, rgba(79, 141, 255, 0.1), rgba(176, 139, 255, 0.05));
+  border: 1px dashed var(--accent);
+  margin-bottom: 2rem;
+  animation: slideUp 0.6s ease both;
+}
+
+.welcome-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.welcome-rocket {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.5));
+}
+
+.welcome-text h4 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.welcome-text p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.chart-placeholder {
+  position: absolute;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.3;
+  text-align: center;
+  pointer-events: none;
+  max-width: 180px;
+}
+
+/* ═══════════════════════════════════════════
+   UNIVERSAL TUTORIAL (CENTERED MODEL)
+═══════════════════════════════════════════ */
+body.tutorial-active {
+  overflow: hidden !important;
+}
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px); /* По-силно замъгляване за по-добър контраст */
+  pointer-events: auto;
+  transition: clip-path 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.tutorial-spotlight {
+  position: fixed;
+  z-index: 11001; 
+  pointer-events: none;
+  border-radius: 16px;
+  /* САМО НЕОНОВ РИНГ, БЕЗ СЯНКА (вече имаме clip-path на overlay-я) */
+  border: 4px solid var(--accent);
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  animation: neon-ring-glow 2s infinite ease-in-out;
+}
+
+@keyframes neon-ring-glow {
+  0% { box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5); border-color: rgba(var(--accent-rgb), 0.8); }
+  50% { box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.8); border-color: rgba(var(--accent-rgb), 1); }
+  100% { box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5); border-color: rgba(var(--accent-rgb), 0.8); }
+}
+
+
+.tutorial-tooltip {
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(340px, 92vw);
+  padding: 1.5rem;
+  z-index: 11005; /* Над ринга */
+  text-align: center;
+  background: rgba(30,30,45,0.95);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  border-radius: 20px;
+  transition: top 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.tutorial-tooltip p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #fff;
+  margin-bottom: 2rem;
+}
+
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1.5rem;
+}
+
+#tutorialStepCount {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+/* ════ MOBILE OPTIMIZATION ════ */
+@media (max-width: 768px) {
+  .tutorial-tooltip {
+    padding: 1.25rem;
+    width: min(320px, 94vw);
+    border-radius: 16px;
+  }
+  .tutorial-tooltip p {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+  }
+  #tutorialStepCount {
+    font-size: 0.8rem;
+  }
+}
+
+
+
+
+

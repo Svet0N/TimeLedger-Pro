@@ -1,5 +1,5 @@
 /**
- * Shifster Solo — script.js
+ * Shifster Individual — script.js
  * ─────────────────────────────────────────────
  * Architecture:
  *   Auth    → Supabase Auth (email/password) OR Demo mode (localStorage)
@@ -47,10 +47,10 @@
 'use strict';
 
 /* ═══════════════════════════════════════════
-   CONFIG  —  replace with your Supabase creds
+   CONFIG — Environment Variables (Vercel)
 ═══════════════════════════════════════════ */
-const SUPABASE_URL = 'https://jfpyxtrutbwnithepezr.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_kpU9p3-TYgxm8LF_yxJ7Pw_yi7Gn3Ok';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -104,6 +104,57 @@ const state = {
   entries: {},
 
   charts: { bar: null, line: null, salary: null, shift: null, mini: null },
+};
+
+/* ═══════════════════════════════════════════
+   ONBOARDING KNOWLEDGE
+═══════════════════════════════════════════ */
+const INDUSTRY_KNOWLEDGE = {
+  "Ресторанти": {
+    "Готвач": [
+      { name: "Дневна (Готвач)", start: "09:00", end: "21:00", break: 60 },
+      { name: "Подготовка", start: "10:00", end: "18:00", break: 30 },
+      { name: "Вечерна", start: "16:00", end: "01:00", break: 45 }
+    ],
+    "Сервитьор": [
+      { name: "Първа смяна", start: "08:00", end: "16:00", break: 30 },
+      { name: "Втора смяна", start: "16:00", end: "00:00", break: 30 },
+      { name: "Междинна", start: "12:00", end: "22:00", break: 60 }
+    ],
+    "Барман": [
+      { name: "Дневна", start: "10:00", end: "18:00", break: 30 },
+      { name: "Нощна", start: "18:00", end: "04:00", break: 45 }
+    ]
+  },
+  "Хотели": {
+    "Рецепция": [
+      { name: "Дневна (Рецепция)", start: "07:00", end: "19:00", break: 60 },
+      { name: "Нощна (Рецепция)", start: "19:00", end: "07:00", break: 60 }
+    ],
+    "Камериерка": [
+      { name: "Редовна смяна", start: "08:00", end: "16:30", break: 30 }
+    ]
+  },
+  "Складове": {
+    "Складов работник": [
+      { name: "Ранна", start: "06:00", end: "14:30", break: 30 },
+      { name: "Редовна", start: "08:30", end: "17:30", break: 60 },
+      { name: "Нощна", start: "22:00", end: "06:00", break: 45 }
+    ]
+  },
+  "Здравеопазване": {
+    "Сестра/Лекар": [
+      { name: "Дневно дежурство", start: "07:30", end: "19:30", break: 60 },
+      { name: "Нощно дежурство", start: "19:30", end: "07:30", break: 60 },
+      { name: "24-часово", start: "08:00", end: "08:00", break: 120 }
+    ]
+  },
+  "Магазини": {
+    "Касиер/Продавач": [
+      { name: "Сутрешна", start: "07:30", end: "15:30", break: 30 },
+      { name: "Следобедна", start: "14:00", end: "22:00", break: 30 }
+    ]
+  }
 };
 
 /* ═══════════════════════════════════════════
@@ -529,11 +580,12 @@ async function loginUser(email, password) {
   return sb.auth.signInWithPassword({ email, password });
 }
 
-async function registerUser(email, password, name, rate) {
+async function registerUser(email, password, name) {
   if (!sb) return { error: { message: 'Supabase не е конфигуриран.' } };
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error || !data.user) return { error };
 
+  const rate = DEFAULT_RATE;
   const profileData = {
     id: data.user.id,
     full_name: name,
@@ -541,6 +593,8 @@ async function registerUser(email, password, name, rate) {
     accent_color: '#4f8dff',
     monthly_goal: 160,
     role: 'user',
+    industry: null,
+    position: null,
     rate_history: [{ rate, date: new Date().toISOString().split('T')[0] }],
     notif_time: '20:00',
     custom_shifts: [],
@@ -613,6 +667,13 @@ function showApp() {
 async function bootApp() {
   showApp();
   state.profile = await dbLoadProfile();
+  
+  // Задължителен Onboarding за нови потребители с липсваща индустрия
+  const hasIndustry = state.profile.industry && state.profile.industry.trim().length > 0;
+  if (!hasIndustry && !state.demoMode && window.location.pathname.includes('app.html')) {
+    showOnboarding();
+  }
+
   if (state.profile.dark_mode !== undefined) applyTheme(state.profile.dark_mode);
   applyAccentColor(state.profile.accent_color || '#4f8dff');
   renderProfile();
@@ -624,6 +685,123 @@ async function bootApp() {
 async function loadCurrentEntries() {
   state.entries = await dbLoadEntries(state.viewYear, state.viewMonth);
 }
+
+/* ═══════════════════════════════════════════
+   ONBOARDING
+═══════════════════════════════════════════ */
+function showOnboarding() {
+  const overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+  
+  overlay.style.opacity = '0';
+  overlay.removeAttribute('hidden');
+  void overlay.offsetWidth; // Trigger reflow
+  overlay.style.transition = 'opacity 0.5s ease';
+  overlay.style.opacity = '1';
+  
+  const grid = document.getElementById('industryGrid');
+  if (grid) {
+    const industries = [
+      { id: "Ресторанти", icon: "🍴" },
+      { id: "Хотели", icon: "🏨" },
+      { id: "Магазини", icon: "🛍️" },
+      { id: "Складове", icon: "📦" },
+      { id: "Здравеопазване", icon: "🏥" },
+      { id: "Транспорт", icon: "🚚" },
+      { id: "Производство", icon: "🏭" },
+      { id: "Друга", icon: "✨" }
+    ];
+    grid.innerHTML = industries.map(info => `
+      <div class="onboarding-item" onclick="onboardingSelectIndustry('${info.id}')">
+        <div class="onboarding-icon">${info.icon}</div>
+        <div class="onboarding-label">${info.id}</div>
+      </div>
+    `).join('');
+  }
+}
+
+window.onboardingSelectIndustry = function(id) {
+  state._onboardingIndustry = id;
+  const positions = INDUSTRY_KNOWLEDGE[id] ? Object.keys(INDUSTRY_KNOWLEDGE[id]) : ["Друга"];
+  const list = document.getElementById('rolesList');
+  const step1 = document.getElementById('onboardingStep1');
+  const step2 = document.getElementById('onboardingStep2');
+  
+  if (list) {
+    list.innerHTML = positions.map(posName => `
+      <button class="btn btn-primary btn-full onboarding-role-btn" 
+              onclick="onboardingSelectRole('${posName}')">${posName}</button>
+    `).join('');
+  }
+  
+  if (step1) step1.setAttribute('hidden', '');
+  if (step2) {
+    step2.removeAttribute('hidden');
+    step2.classList.add('fade-in');
+  }
+};
+
+window.onboardingBack = function() {
+  document.getElementById('onboardingStep2').setAttribute('hidden', '');
+  document.getElementById('onboardingStep1').removeAttribute('hidden');
+};
+
+window.onboardingSelectRole = async function(posName) {
+  const industryId = state._onboardingIndustry;
+  const industryData = INDUSTRY_KNOWLEDGE[industryId] || {};
+  const roleShifts = industryData[posName] || [];
+  
+  const btn = document.querySelector(`.onboarding-role-btn[onclick*="${posName}"]`);
+  if (btn) btn.innerHTML = '<span class="spinner"></span>';
+
+  // Silent Template Injection - Mapping to standard format
+  const templates = roleShifts.map(s => ({
+    id: getUUID(),
+    name: s.name,
+    start: s.start,
+    end: s.end,
+    break_minutes: s.break || 0,
+    isDefault: false
+  }));
+  if (templates.length > 0) templates[0].isDefault = true;
+
+  try {
+    const updates = {
+      industry: industryId,
+      position: posName,
+      custom_shifts: templates
+    };
+    
+    // Save to user_profiles (existing logic)
+    await dbSaveProfile(updates);
+    
+    state.profile = { ...state.profile, ...updates };
+    
+    // Smooth hide
+    const overlay = document.getElementById('onboardingOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      overlay.setAttribute('hidden', '');
+      overlay.style.opacity = '1';
+    }, 600);
+
+    renderProfile();
+    await refreshAll();
+    
+    // Незабавен старт на туториала след избиране на роля
+    const settings = LS.loadSettings();
+    if (!settings.tutorial_done) {
+        startTutorial();
+    }
+    
+    toast('Готово! Твоите шаблони са заредени 🚀', 'success');
+  } catch (e) {
+    console.error(e);
+    toast('Възникна грешка при запазването.', 'error');
+    if (btn) btn.textContent = posName;
+  }
+};
+
 
 /* ═══════════════════════════════════════════
    ACCENT COLOR
@@ -652,6 +830,22 @@ async function renderDashboard() {
   const days = countDays(filtered);
   const avg = days > 0 ? total / days : 0;
   const forecast = calcForecast(state.entries);
+
+  // Генериране на Empty State ако няма записи за месеца
+  const dashWelcome = document.getElementById('dashWelcomeBanner');
+  if (dashWelcome) {
+    if (days === 0 && !state.demoMode) {
+      dashWelcome.style.display = 'flex';
+      const roleName = state.profile.position || 'твоята роля';
+      document.getElementById('welcomeRoleName').textContent = roleName;
+      
+      document.getElementById('btnStartFirstShift').onclick = () => {
+        switchTab('calendar');
+      };
+    } else {
+      dashWelcome.style.display = 'none';
+    }
+  }
 
   // Night hours calculation
   let nightHours = 0;
@@ -758,7 +952,27 @@ async function renderDashboard() {
       filterRow.appendChild(btn);
     });
   }
+  checkTutorialTrigger();
 }
+
+function checkTutorialTrigger() {
+  const settings = LS.loadSettings();
+  // По-проста проверка: Ако профилът е готов, но туториалът не е отбелязан като завършен
+  if (state.profile?.industry && !settings.tutorial_done && !state.demoMode) {
+    if (document.getElementById('tutorialOverlay') && !document.getElementById('tutorialOverlay').hasAttribute('hidden')) return;
+    
+    console.log('✨ Shifster: Starting auto-walkthrough...');
+    setTimeout(startTutorial, 1500);
+  }
+}
+
+// Полезна функция за тестване (може да се вика от конзолата или бутон)
+window.resetTutorial = function() {
+  const settings = LS.loadSettings();
+  LS.saveSettings({ ...settings, tutorial_done: false });
+  location.reload();
+};
+
 
 /* ── Unconfirmed Shifts Logic ── */
 function checkUnconfirmedShifts() {
@@ -913,6 +1127,13 @@ function renderMiniChart() {
       }
     }
   });
+
+  // Toggle Placeholder if no data this week
+  const hasWeekData = values.some(v => v > 0);
+  const placeholder = document.getElementById('chartPlaceholderText');
+  if (placeholder) {
+    placeholder.style.display = hasWeekData ? 'none' : 'block';
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -2305,14 +2526,13 @@ function wireAuthEvents() {
     const name = document.getElementById('regName')?.value.trim();
     const email = document.getElementById('regEmail')?.value.trim();
     const pass = document.getElementById('regPassword')?.value;
-    const rate = parseFloat(document.getElementById('regRate')?.value) || DEFAULT_RATE;
     const msg = document.getElementById('authMsg');
     if (!name || !email || !pass) {
       if (msg) { msg.textContent = 'Попълни всички полета.'; msg.className = 'auth-msg error'; }
       return;
     }
     regBtn.innerHTML = '<span class="spinner"></span>';
-    const { error } = await registerUser(email, pass, name, rate);
+    const { error } = await registerUser(email, pass, name);
     if (error) {
       if (msg) { msg.textContent = error.message; msg.className = 'auth-msg error'; }
       regBtn.textContent = 'Създай акаунт';
@@ -2557,8 +2777,7 @@ function wireAppEvents() {
 function registerSW() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
-      .then(() => console.log('[SW] registered'))
-      .catch(e => console.warn('[SW] failed:', e));
+      .catch(() => {}); // Silent fail for SW
   }
 }
 
@@ -2566,6 +2785,7 @@ function registerSW() {
    INIT
 ═══════════════════════════════════════════ */
 async function init() {
+  window.scrollTo(0, 0); // Винаги започвай от най-отгоре при рефреш
   const isAppPage = window.location.pathname.includes('app.html');
   const settings = LS.loadSettings();
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -2584,7 +2804,7 @@ async function init() {
     try {
       const { data, error } = await sb.auth.getSession();
       if (!error) session = data?.session;
-    } catch (e) { console.warn('Session check failed:', e); }
+    } catch (e) { /* silent catch */ }
   }
 
   const isDemo = settings.demo_mode === true;
@@ -2607,8 +2827,236 @@ async function init() {
   registerSW();
 }
 
+/* ═══════════════════════════════════════════
+   WALKTHROUGH TUTORIAL
+═══════════════════════════════════════════ */
+function getTutorialSteps() {
+  const isMobile = window.innerWidth < 768;
+  const steps = [];
+  
+  if (isMobile) {
+    // На мобилен разделяме статистиките на 2 стъпки за по-малка "дупка"
+    steps.push({ 
+      ids: ['cardHours', 'cardSalary'], 
+      text: 'Тук ще виждаш колко пари си изработил и колко часа си направил в реално време.' 
+    });
+    steps.push({ 
+      ids: ['cardDays', 'cardAvg'], 
+      text: 'Тук виждаш статистиката за работните дни и средната продължителност на смените си.' 
+    });
+  } else {
+    // На десктоп подчертаваме всичко заедно
+    steps.push({ 
+      id: 'statsGrid', 
+      text: 'Това са твоите живи данни. Когато добавиш смяна, тук ще видиш часовете и парите си в реално време.' 
+    });
+  }
+  
+  // Общи стъпки
+  steps.push({ 
+    id: 'dashboardFilters', 
+    text: 'Това са твоите бързи шаблони. Shifster ги зареди автоматично за твоята роля, за да спестиш време.' 
+  });
+  steps.push({ 
+    selector: '.nav-btn[data-tab="calendar"]', 
+    text: 'Тук се случва магията. Отиди в календара, за да впишеш първата си смяна и да планираш месеца!' 
+  });
+  
+  return steps;
+}
+
+let tutorialIdx = 0;
+let activeTutorialSteps = [];
+
+function startTutorial() {
+  const overlay = document.getElementById('tutorialOverlay');
+  if (!overlay) return;
+
+  activeTutorialSteps = getTutorialSteps();
+  tutorialIdx = 0;
+  
+  document.body.classList.add('tutorial-active');
+  overlay.removeAttribute('hidden');
+  overlay.style.opacity = '1';
+  
+  document.getElementById('btnTutorialNext').onclick = nextTutorialStep;
+  showTutorialStep(0);
+}
+
+
+
+function showTutorialStep(idx) {
+  const step = activeTutorialSteps[idx];
+  let target;
+  let rect;
+  
+  if (step.ids) {
+    // Union rect за масив от елементи
+    const boxes = step.ids.map(id => document.getElementById(id).getBoundingClientRect());
+    const top = Math.min(...boxes.map(b => b.top));
+    const left = Math.min(...boxes.map(b => b.left));
+    const bottom = Math.max(...boxes.map(b => b.bottom));
+    const right = Math.max(...boxes.map(b => b.right));
+    rect = { top, left, bottom, right, width: right - left, height: bottom - top };
+    target = document.getElementById(step.ids[0]); // ползваме за скрол
+  } else {
+    target = step.id ? document.getElementById(step.id) : document.querySelector(step.selector);
+    if (!target) return nextTutorialStep();
+    rect = target.getBoundingClientRect();
+  }
+  
+  // Първо скролваме до елемента
+  // На мобилен центрираме по-агресивно
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    const spotlight = document.getElementById('tutorialSpotlight');
+    // Опресняваме rect след скрола
+    if (step.ids) {
+      const boxes = step.ids.map(id => document.getElementById(id).getBoundingClientRect());
+      const top = Math.min(...boxes.map(b => b.top));
+      const left = Math.min(...boxes.map(b => b.left));
+      const bottom = Math.max(...boxes.map(b => b.bottom));
+      const right = Math.max(...boxes.map(b => b.right));
+      rect = { top, left, bottom, right, width: right - left, height: bottom - top };
+    } else {
+      rect = target.getBoundingClientRect();
+    }
+    
+    // ПОЗИЦИОНИРАНЕ НА НЕОНОВИЯ РИНГ
+    spotlight.style.width = `${rect.width + 16}px`;
+    spotlight.style.height = `${rect.height + 16}px`;
+    spotlight.style.top = `${rect.top - 8}px`;
+    spotlight.style.left = `${rect.left - 8}px`;
+    
+    // МАГИЯТА: Изрязване на "кристална дупка" в overlay-я
+    const overlay = document.getElementById('tutorialOverlay');
+    const hx1 = rect.left - 8;
+    const hy1 = rect.top - 8;
+    const hx2 = rect.right + 8;
+    const hy2 = rect.bottom + 8;
+    
+    // Инвертиран полигон (Дупка в центъра)
+    overlay.style.clipPath = `polygon(0% 0%, 0% 100%, ${hx1}px 100%, ${hx1}px ${hy1}px, ${hx2}px ${hy1}px, ${hx2}px ${hy2}px, ${hx1}px ${hy2}px, ${hx1}px 100%, 100% 100%, 100% 0%)`;
+    
+    // ИНТЕЛИГЕНТНО ПОЗИЦИОНИРАНЕ НА ПОДСКАЗКАТА
+    const tooltip = document.getElementById('tutorialTooltip');
+    const isMobile = window.innerWidth < 768;
+    const gap = isMobile ? 12 : 30; 
+    const tipWidth = tooltip.offsetWidth || 340;
+    const tipHeight = tooltip.offsetHeight || 180;
+    
+    // 1. Мобилна логика: Специализирани позиции
+    if (isMobile) {
+      if (idx === 0) {
+        // Първа стъпка - Текстът отива най-отгоре
+        tooltip.style.bottom = 'auto';
+        tooltip.style.top = '15%'; 
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translate(-50%, 0)';
+      } else if (idx === activeTutorialSteps.length - 1) {
+        // ПОСЛЕДНА СТЪПКА - Точно под Календара (да не е баш долу)
+        tooltip.style.bottom = 'auto';
+        tooltip.style.top = `${rect.bottom + 20}px`;
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translateX(-50%)';
+      } else if (rect.top < 350) {
+        // Ако подчертаваме нещо в горната част, подсказката отива долу
+        tooltip.style.top = 'auto';
+        tooltip.style.bottom = '40px';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translateX(-50%)';
+      } else {
+        // Стандартно за мобилни (Центрирано горе)
+        tooltip.style.bottom = 'auto';
+        tooltip.style.top = '120px';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translateX(-50%)';
+      }
+    } else {
+      // Стандартна логика за десктоп (Над или Под)
+      tooltip.style.bottom = 'auto';
+      tooltip.style.transform = 'translate(-50%, -50%)';
+      
+      let finalLeft = rect.left + rect.width / 2;
+      finalLeft = Math.max(tipWidth / 2 + 16, Math.min(window.innerWidth - tipWidth / 2 - 16, finalLeft));
+      
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      let finalTop;
+      
+      if (spaceBelow > tipHeight + gap * 2) {
+        finalTop = rect.bottom + gap + tipHeight / 2;
+      } else {
+        finalTop = rect.top - gap - tipHeight / 2;
+      }
+      
+      tooltip.style.left = `${finalLeft}px`;
+      tooltip.style.top = `${finalTop}px`;
+    }
+    
+    
+    // Обновяване на текста
+    document.getElementById('tutorialText').textContent = step.text;
+    document.getElementById('tutorialStepCount').textContent = `${idx + 1}/${activeTutorialSteps.length}`;
+    document.getElementById('btnTutorialNext').textContent = idx === activeTutorialSteps.length - 1 ? 'Разбрах!' : 'Напред →';
+  }, 400);
+}
+
+function nextTutorialStep() {
+  tutorialIdx++;
+  if (tutorialIdx >= activeTutorialSteps.length) {
+    finishTutorial();
+  } else {
+    showTutorialStep(tutorialIdx);
+  }
+}
+
+async function finishTutorial() {
+  const overlay = document.getElementById('tutorialOverlay');
+  overlay.style.opacity = '0';
+  overlay.style.clipPath = 'none'; // Ресет на дупката
+  
+  document.body.classList.remove('tutorial-active');
+  
+  setTimeout(() => {
+    overlay.setAttribute('hidden', '');
+    overlay.style.opacity = '1';
+  }, 400);
+
+  // Persistence (Локално е достатъчно)
+  const settings = LS.loadSettings();
+  LS.saveSettings({ ...settings, tutorial_done: true });
+  
+  toast('Супер! Сега си господар на своето време. 👋', 'success');
+}
+
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
+
+// Излагаме функциите към Window за съвместимост с HTML (onclick и т.н.)
+window.onboardingBack = onboardingBack;
+window.switchTab = switchTab;
+window.resetTutorial = resetTutorial;
+window.startTutorial = startTutorial;
+window.finishTutorial = finishTutorial;
+window.openHourModal = openHourModal;
+window.closeHourModal = closeHourModal;
+window.onboardingSelectIndustry = onboardingSelectIndustry;
+window.onboardingSelectRole = onboardingSelectRole;
+window.onboardingStart = onboardingStart;
+window.saveHours = saveHours;
+window.saveGoal = saveGoal;
+window.saveRate = saveRate;
+window.exportCSV = exportCSV;
+window.exportPDF = exportPDF;
+window.exportXLSX = exportXLSX;
+window.confirmReset = confirmReset;
+window.doReset = doReset;
+window.renderHistoryDetail = renderHistoryDetail;
+window.saveCustomShiftTemplate = saveCustomShiftTemplate;
+window.onboardingBack = onboardingBack;

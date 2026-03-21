@@ -1,0 +1,14 @@
+{
+  "name": "shifster-individual",
+  "version": "1.0.0",
+  "description": "Shifster Individual — проследявай работни часове, заплата и цели.",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

@@ -9,11 +9,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Shifster" />
-  <title>Shifster Solo</title>
+  <title>Shifster Individual — Твоят Работен Пътник</title>
+
+  <!-- SEO & Social Media -->
+  <meta name="description" content="Проследявай работните си часове, заплата и цели с лекота и сигурност." />
+  <meta property="og:title" content="Shifster Individual — Твоят Работен Пътник" />
+  <meta property="og:description" content="Удачното проследяване на заплата и цели. Всичко в реално време, на едно място." />
+  <meta property="og:image" content="icons/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" href="icons/icon.png" />
+  <link rel="apple-touch-icon" href="icons/icon.png" />
   <link rel="stylesheet" href="style.css?v=7" />
 
   <!-- Supabase -->
@@ -37,8 +45,7 @@
   <div id="authScreen" class="auth-screen">
     <div class="auth-card">
       <div class="auth-logo">
-        <span class="auth-logo-icon">⏱</span>
-        <h1>Shifster <span class="logo-solo">Solo</span></h1>
+        <img src="icons/logo.png" class="logo-auth" alt="Shifster Logo">
         <p>Проследявай работното си време с прецизност</p>
       </div>
 
@@ -73,10 +80,6 @@
           <label for="regPassword">Парола</label>
           <input type="password" id="regPassword" placeholder="минимум 6 символа" autocomplete="new-password" />
         </div>
-        <div class="field-group">
-          <label for="regRate">Часова ставка (лв./час)</label>
-          <input type="number" id="regRate" value="11" min="1" max="9999" step="0.5" />
-        </div>
         <button class="btn btn-primary btn-full" id="registerBtn">Създай акаунт</button>
       </div>
 
@@ -89,6 +92,31 @@
 
   <!-- ══ TOAST ══ -->
   <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ════ ONBOARDING ════ -->
+  <div id="onboardingOverlay" class="onboarding-overlay" hidden>
+    <div class="onboarding-card glass-card">
+      <div id="onboardingStep1">
+        <div class="onboarding-header">
+          <h2>Добре дошъл! 👋</h2>
+          <p>Кажи ни с какво се занимаваш, за да настроим Shifster за теб.</p>
+        </div>
+        <h3 class="onboarding-title">Избери твоята индустрия:</h3>
+        <div class="onboarding-grid" id="industryGrid"></div>
+      </div>
+
+      <div id="onboardingStep2" hidden>
+        <div class="onboarding-header">
+          <h2>Твоята роля</h2>
+          <p>Shifster ще създаде автоматични шаблони за твоята позиция.</p>
+        </div>
+        <div class="roles-container">
+          <div id="rolesList" class="onboarding-roles"></div>
+          <button class="btn btn-ghost btn-full" style="margin-top:1.5rem" onclick="onboardingBack()">⬅ Назад към индустриите</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js?v=7" defer></script>
 </body>
