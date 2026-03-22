@@ -46,6 +46,10 @@
 
 'use strict';
 
+// Vercel Speed Insights
+import { injectSpeedInsights } from '@vercel/speed-insights';
+injectSpeedInsights();
+
 /* ═══════════════════════════════════════════
    CONFIG — Environment Variables (Vercel)
 ═══════════════════════════════════════════ */
