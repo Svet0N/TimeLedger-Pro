@@ -11,9 +11,11 @@
   <title>Shifster Individual — Твоят Работен Пътник</title>
 
   <!-- SEO & Social Media -->
-  <meta name="description" content="Проследявай работните си часове, заплата и цели с лекота и сигурност. Всичко на едно място в Shifster Individual." />
+  <meta name="description"
+    content="Проследявай работните си часове, заплата и цели с лекота и сигурност. Всичко на едно място в Shifster Individual." />
   <meta property="og:title" content="Shifster Individual — Твоят Работен Пътник" />
-  <meta property="og:description" content="Удачното проследяване на заплата и цели. Всичко в реално време, на едно място." />
+  <meta property="og:description"
+    content="Удачното проследяване на заплата и цели. Всичко в реално време, на едно място." />
   <meta property="og:image" content="/icons/logo.png" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -43,10 +45,13 @@
 
   <!-- ─── AUTH SCREEN ─── -->
   <div id="authScreen" class="auth-screen">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <img src="/icons/logo.png" alt="Shifster Logo" class="onboarding-logo">
-        <p>Проследявай работното си време с прецизност</p>
+    <div class="auth-card glass-card">
+      <div class="auth-header">
+        <img src="icons/logo.png" alt="Shifster Logo" class="auth-logo-img">
+        <div class="auth-focus-text">
+          <h1>Shifster Individual</h1>
+          <p>Твоят личен асистент за смени и заплати.</p>
+        </div>
       </div>
 
       <div class="auth-tabs">
@@ -56,36 +61,52 @@
 
       <div id="authLogin" class="auth-form active">
         <div class="field-group">
-          <label for="loginEmail">Имейл</label>
-          <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email" />
+          <div class="input-wrapper">
+            <span class="input-icon">📧</span>
+            <input type="email" id="loginEmail" placeholder="Имейл адрес" autocomplete="email" />
+          </div>
         </div>
         <div class="field-group">
-          <label for="loginPassword">Парола</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="loginPassword" placeholder="Парола" autocomplete="current-password" />
+          </div>
         </div>
-        <button class="btn btn-primary btn-full" id="loginBtn">Влез в акаунта</button>
+        <button class="btn btn-primary btn-full btn-lg" id="loginBtn">Влез в акаунта</button>
         <button class="btn btn-ghost btn-full" id="demoBtn">🎭 Демо режим (без регистрация)</button>
       </div>
 
       <div id="authRegister" class="auth-form">
         <div class="field-group">
-          <label for="regName">Пълно име</label>
-          <input type="text" id="regName" placeholder="Иван Иванов" />
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" id="regName" placeholder="Вашето име" />
+          </div>
         </div>
         <div class="field-group">
-          <label for="regEmail">Имейл</label>
-          <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email" />
+          <div class="input-wrapper">
+            <span class="input-icon">📧</span>
+            <input type="email" id="regEmail" placeholder="Имейл адрес" autocomplete="email" />
+          </div>
         </div>
         <div class="field-group">
-          <label for="regPassword">Парола</label>
-          <input type="password" id="regPassword" placeholder="минимум 6 символа" autocomplete="new-password" />
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="regPassword" placeholder="Парола (минимум 6 символа)"
+              autocomplete="new-password" />
+          </div>
         </div>
-        <button class="btn btn-primary btn-full" id="registerBtn">Създай акаунт</button>
+        <button class="btn btn-primary btn-full btn-lg" id="registerBtn">Създай акаунт</button>
       </div>
 
       <div id="authMsg" class="auth-msg"></div>
-      <div id="resendContainer" hidden style="text-align:center; margin-top:0.5rem">
-        <button id="resendBtn" class="btn btn-ghost btn-sm">📩 Изпрати нов код</button>
+
+      <div id="resendContainer" hidden class="resend-box">
+        <button id="resendBtn" class="btn btn-ghost btn-sm">📩 Изпрати нов код за потвърждение</button>
+      </div>
+
+      <div class="team-teaser">
+        <p>Имаш ресторант? <span>Shifster Team</span> очаквай скоро.</p>
       </div>
     </div>
   </div>
@@ -112,7 +133,8 @@
         </div>
         <div class="roles-container">
           <div id="rolesList" class="onboarding-roles"></div>
-          <button class="btn btn-ghost btn-full" style="margin-top:1.5rem" onclick="onboardingBack()">⬅ Назад към индустриите</button>
+          <button class="btn btn-ghost btn-full" style="margin-top:1.5rem" onclick="onboardingBack()">⬅ Назад към
+            индустриите</button>
         </div>
       </div>
     </div>
