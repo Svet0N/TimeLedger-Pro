@@ -4,11 +4,14 @@
   "description": "Shifster Individual — проследявай работни часове, заплата и цели.",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.19",
     "vite": "^5.0.0"
   }
 }

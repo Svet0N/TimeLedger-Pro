@@ -48,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    // Check if user already has a Stripe customer ID
+    // Fetch user profile (includes stripe_customer_id and subscription_status)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
-      .select('stripe_customer_id, full_name')
+      .select('stripe_customer_id, full_name, subscription_status')
       .eq('id', user.id)
       .single();
 
@@ -78,15 +78,46 @@ serve(async (req) => {
         .eq('id', user.id);
     }
 
-    // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    // ── TRIAL GUARD ──────────────────────────────────────────────────
+    // Check if this customer has ever had a subscription on Stripe.
+    // We use status='all' to catch active, trialing, past_due, canceled, etc.
+    let hasHadSubscriptionBefore = false;
+    try {
+      const existingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'all',
+        limit: 1,
+      });
+      hasHadSubscriptionBefore = existingSubs.data.length > 0;
+    } catch (err) {
+      // If the check fails, be safe and don't give a trial
+      console.warn('Could not check existing subscriptions:', err.message);
+      hasHadSubscriptionBefore = true;
+    }
+
+    const originUrl = req.headers.get('origin') || 'http://localhost:5173';
+
+    // Build session parameters
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: successUrl || `${req.headers.get('origin') || 'http://localhost:5173'}?payment=success`,
-      cancel_url: cancelUrl || `${req.headers.get('origin') || 'http://localhost:5173'}?payment=cancelled`,
+      // Always collect payment method even during trial
+      payment_method_collection: 'always',
+      success_url: successUrl || `${originUrl}/app?payment=success`,
+      cancel_url: cancelUrl || `${originUrl}/app?payment=cancelled`,
       metadata: { supabase_user_id: user.id },
-    });
+    };
+
+    // Only give trial if this customer has never subscribed before
+    if (!hasHadSubscriptionBefore) {
+      sessionParams.subscription_data = { trial_period_days: 7 };
+      console.log(`Granting 7-day trial to new customer ${customerId}`);
+    } else {
+      console.log(`Customer ${customerId} has previous subscriptions — no trial granted.`);
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

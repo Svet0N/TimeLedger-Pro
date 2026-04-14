@@ -28,8 +28,23 @@ serve(async (req) => {
 
   console.log(`Processing event: ${event.type}`);
 
+  // Helper: update subscription_status by customer ID
+  async function updateStatusByCustomer(customerId: string, stripeStatus: string) {
+    // trialing and active both grant full access
+    const status = ['active', 'trialing'].includes(stripeStatus) ? 'active' : 'inactive';
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ subscription_status: status })
+      .eq('stripe_customer_id', customerId);
+
+    if (error) console.error(`Failed to update status for customer ${customerId}:`, error);
+    else console.log(`Set status='${status}' (stripe: '${stripeStatus}') for customer ${customerId}`);
+  }
+
   try {
     switch (event.type) {
+
+      // ── Checkout completed ──────────────────────────────────────────
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.supabase_user_id;
@@ -48,23 +63,21 @@ serve(async (req) => {
         break;
       }
 
-      case 'customer.subscription.updated': {
+      // ── Subscription created (handles new trials immediately) ───────
+      case 'customer.subscription.created': {
         const sub = event.data.object as Stripe.Subscription;
-        const customerId = sub.customer as string;
-        
-        // Map Stripe status to our simplified status
-        const status = ['active', 'trialing'].includes(sub.status) ? 'active' : 'inactive';
-
-        const { error } = await supabase
-          .from('user_profiles')
-          .update({ subscription_status: status })
-          .eq('stripe_customer_id', customerId);
-
-        if (error) console.error('Update failed:', error);
-        else console.log(`Updated status to '${status}' for customer ${customerId}`);
+        await updateStatusByCustomer(sub.customer as string, sub.status);
         break;
       }
 
+      // ── Subscription updated (plan changes, trial end, cancellations)
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        await updateStatusByCustomer(sub.customer as string, sub.status);
+        break;
+      }
+
+      // ── Subscription deleted/cancelled ──────────────────────────────
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = sub.customer as string;

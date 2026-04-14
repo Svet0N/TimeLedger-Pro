@@ -987,8 +987,8 @@ function applyAccentColor(color) {
 async function renderDashboard() {
   const todayStr = new Date().toISOString().split('T')[0];
   const { viewYear, viewMonth } = state;
-  const currentEntries = await dbLoadEntries(viewYear, viewMonth);
-  const financials = calculateFinancials(currentEntries);
+  state.entries = await dbLoadEntries(viewYear, viewMonth);
+  const financials = calculateFinancials(state.entries);
 
   const dashWelcome = document.getElementById('dashWelcomeBanner');
   if (dashWelcome) {

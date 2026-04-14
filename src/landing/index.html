@@ -37,8 +37,8 @@
     @keyframes countUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
     .count-anim { animation: countUp 1.2s ease both; }
     /* FAQ accordion */
-    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-    .faq-answer.open { max-height: 300px; }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease; opacity: 0; }
+    .faq-answer.open { max-height: 500px; opacity: 1; }
     /* Progress bar */
     @keyframes fillBar { from { width: 0; } to { width: 72%; } }
     .progress-fill { animation: fillBar 2s 0.5s ease both; }
@@ -62,7 +62,7 @@
 <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
   <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <img src="/icons/logo-nav.png" alt="Shifster" class="h-8 w-auto">
+      <img src="/icons/logo-nav.png" alt="Shifster" class="h-10 w-auto">
       <!-- Премахнат текстът Shifster, за да не се дублира с логото -->
     </div>
     
@@ -70,15 +70,37 @@
       <a href="#features" class="hover:text-white transition">Функции</a>
       <a href="#how-it-works" class="hover:text-white transition">Как работи</a>
       <a href="#pricing" class="hover:text-white transition">Цени</a>
+      <a href="#reviews" class="hover:text-white transition">Отзиви</a>
       <a href="#faq" class="hover:text-white transition">FAQ</a>
+      <a href="#contact" class="hover:text-white transition">Контакти</a>
     </div>
 
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
       <a href="/auth" class="hidden sm:block text-sm font-semibold text-slate-300 hover:text-white transition">Вход</a>
       <a href="/auth" class="px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105 active:scale-95"
          style="background:var(--accent); color:#fff; box-shadow:0 4px 15px rgba(79,141,255,0.4);">
         Опитай безплатно
       </a>
+      <!-- Mobile Toggle -->
+      <button id="mobileMenuToggle" class="md:hidden flex flex-col gap-1.5 p-2 focus:outline-none">
+        <span class="w-6 h-0.5 bg-slate-300 rounded-full transition-all duration-300 origin-center"></span>
+        <span class="w-6 h-0.5 bg-slate-300 rounded-full transition-all duration-300"></span>
+        <span class="w-6 h-0.5 bg-slate-300 rounded-full transition-all duration-300 origin-center"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu Drawer -->
+  <div id="mobileMenu" class="md:hidden fixed inset-0 z-40 bg-[#0e1832]/95 backdrop-blur-xl transition-all duration-500 opacity-0 pointer-events-none translate-x-full">
+    <div class="flex flex-col items-center justify-center min-h-screen gap-8 text-2xl font-bold text-white">
+      <a href="#features" class="mobile-nav-link">Функции</a>
+      <a href="#how-it-works" class="mobile-nav-link">Как работи</a>
+      <a href="#pricing" class="mobile-nav-link">Цени</a>
+      <a href="#reviews" class="mobile-nav-link">Отзиви</a>
+      <a href="#faq" class="mobile-nav-link">FAQ</a>
+      <a href="#contact" class="mobile-nav-link">Контакти</a>
+      <div class="h-px w-20 bg-white/10 my-4"></div>
+      <a href="/auth" class="text-accent underline underline-offset-8">Влез в профила →</a>
     </div>
   </div>
 </nav>
@@ -110,7 +132,7 @@
           Разгледай демо
         </a>
       </div>
-      <p class="text-xs text-slate-500">✓ Без кредитна карта &nbsp;·&nbsp; ✓ Данните ти са само твои &nbsp;·&nbsp; ✓ Работи офлайн</p>
+      <p class="text-xs text-slate-500">✓ Пълна поверителност &nbsp;·&nbsp; ✓ Работи офлайн</p>
     </div>
 
     <!-- App Mockup -->
@@ -242,13 +264,13 @@
   <div class="max-w-6xl mx-auto">
     <div class="text-center mb-16 fade-hidden">
       <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:var(--green);">Всичко, което трябва ти</p>
-      <h2 class="text-4xl font-extrabold text-white">Функции, създадени за<br>реалния живот на сменния работник</h2>
+      <h2 class="text-4xl font-extrabold text-white">Функции, създадени за<br>хората с динамичен график</h2>
     </div>
     <div class="grid md:grid-cols-3 gap-6">
       <div class="fade-hidden glass rounded-2xl p-6 hover-lift">
         <div class="text-3xl mb-4">⏱️</div>
         <h3 class="font-bold text-white text-lg mb-2">Реално време</h3>
-        <p class="text-slate-400 text-sm">Виждаш заплатата си да расте с всеки изработен час — мигновено.</p>
+        <p class="text-slate-400 text-sm">Виждаш заплатата си да расте с всеки изминат ден — мигновено.</p>
       </div>
       <div class="fade-hidden glass rounded-2xl p-6 hover-lift">
         <div class="text-3xl mb-4">📅</div>
@@ -324,9 +346,10 @@
       <h2 class="text-4xl font-extrabold text-white">Избери своя план</h2>
       <p class="text-slate-400 mt-3">🔥 Промоционална цена — само за ранните потребители</p>
     </div>
-    <div class="grid md:grid-cols-3 gap-6 mt-12">
+    <div class="grid md:grid-cols-2 max-w-4xl mx-auto gap-6 mt-12">
       <!-- Monthly -->
-      <div class="fade-hidden glass rounded-2xl p-7 hover-lift flex flex-col">
+      <div class="fade-hidden glass rounded-2xl p-7 hover-lift flex flex-col relative" style="border-color:rgba(79,141,255,0.3);">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold" style="background:var(--accent); color:#fff;">Много популярен</div>
         <p class="font-bold text-slate-300 text-lg mb-1">Месечен</p>
         <p class="text-5xl font-extrabold text-white my-3">3.49<span class="text-2xl text-slate-400">€</span></p>
         <p class="text-slate-500 text-sm mb-6">на месец</p>
@@ -338,21 +361,6 @@
         </ul>
         <a href="/auth" class="block text-center py-3 rounded-xl font-semibold border border-white/20 text-white hover:border-white/40 transition-all">Избери →</a>
       </div>
-      <!-- Popular -->
-      <div class="fade-hidden rounded-2xl p-7 hover-lift flex flex-col relative" style="background:rgba(79,141,255,0.12); border:2px solid rgba(79,141,255,0.6); box-shadow:0 0 40px rgba(79,141,255,0.2);">
-        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold" style="background:var(--accent); color:#fff;">⭐ Най-популярен</div>
-        <p class="font-bold text-white text-lg mb-1">Тримесечен</p>
-        <p class="text-5xl font-extrabold text-white my-3">8.99<span class="text-2xl text-slate-400">€</span></p>
-        <p class="text-sm mb-1" style="color:var(--green);">Спести 15% · 3.00€/мес</p>
-        <p class="text-slate-500 text-sm mb-6">на 3 месеца</p>
-        <ul class="space-y-2 text-sm text-slate-300 flex-1 mb-6">
-          <li>✅ Всичко от Месечен</li>
-          <li>✅ Приоритетна поддръжка</li>
-          <li>✅ Разширена аналитика</li>
-          <li>✅ Шаблони за смени</li>
-        </ul>
-        <a href="/auth" class="block text-center py-3 rounded-xl font-bold text-white transition-all hover:brightness-110" style="background:var(--accent);">Избери →</a>
-      </div>
       <!-- Annual -->
       <div class="fade-hidden glass rounded-2xl p-7 hover-lift flex flex-col relative" style="border-color:rgba(62,207,142,0.3);">
         <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold" style="background:var(--green); color:#0e1832;">🏆 Най-изгодно</div>
@@ -361,7 +369,7 @@
         <p class="text-sm mb-1" style="color:var(--green);">Спести 28% · 2.50€/мес</p>
         <p class="text-slate-500 text-sm mb-6">на година</p>
         <ul class="space-y-2 text-sm text-slate-300 flex-1 mb-6">
-          <li>✅ Всичко от Тримесечен</li>
+          <li>✅ Всичко от Месечен</li>
           <li>✅ Ранен достъп до нови функции</li>
           <li>✅ Годишен отчет</li>
           <li>✅ VIP поддръжка</li>
@@ -376,7 +384,7 @@
 <!-- ═══════════════════════════════════════════
   7. TESTIMONIALS
 ═══════════════════════════════════════════ -->
-<section class="py-24 px-6">
+<section id="reviews" class="py-24 px-6">
   <div class="max-w-5xl mx-auto">
     <h2 class="text-3xl font-extrabold text-white text-center mb-12 fade-hidden">Какво казват потребителите</h2>
     <div class="grid md:grid-cols-3 gap-6">
@@ -420,8 +428,10 @@
           <span>Сигурни ли са данните ми?</span>
           <span class="faq-icon text-xl" style="color:var(--accent);">+</span>
         </button>
-        <div class="faq-answer px-6 pb-4 text-slate-400 text-sm leading-relaxed">
-          Абсолютно. Данните ти се съхраняват локално на твоето устройство. Cloud синхронизацията е незадължителна и се случва само с твой Supabase профил. Никой трети не вижда данните ти.
+        <div class="faq-answer text-slate-400 text-sm leading-relaxed">
+          <div class="px-6 pb-4">
+            Абсолютно. Данните ти се съхраняват локално на твоето устройство. Cloud синхронизацията е незадължителна и се случва само с твой Supabase профил. Никой трети не вижда данните ти.
+          </div>
         </div>
       </div>
       <div class="faq-item glass rounded-xl overflow-hidden fade-hidden">
@@ -429,8 +439,10 @@
           <span>Работи ли офлайн?</span>
           <span class="faq-icon text-xl" style="color:var(--accent);">+</span>
         </button>
-        <div class="faq-answer px-6 pb-4 text-slate-400 text-sm leading-relaxed">
-          Да! Shifster работи напълно офлайн. Всичките ти данни са достъпни дори без интернет. Когато се свържеш, промените се синхронизират автоматично.
+        <div class="faq-answer text-slate-400 text-sm leading-relaxed">
+          <div class="px-6 pb-4">
+            Да! Shifster работи напълно офлайн. Всичките ти данни са достъпни дори без интернет. Когато се свържеш, промените се синхронизират автоматично.
+          </div>
         </div>
       </div>
       <div class="faq-item glass rounded-xl overflow-hidden fade-hidden">
@@ -438,8 +450,10 @@
           <span>Мога ли да сменя плана си?</span>
           <span class="faq-icon text-xl" style="color:var(--accent);">+</span>
         </button>
-        <div class="faq-answer px-6 pb-4 text-slate-400 text-sm leading-relaxed">
-          Разбира се. Можеш да надградиш или намалиш плана си по всяко време от секцията "Абонамент". Промяната влиза в сила мигновено.
+        <div class="faq-answer text-slate-400 text-sm leading-relaxed">
+          <div class="px-6 pb-4">
+            Разбира се. Можеш да надградиш или намалиш плана си по всяко време от секцията "Абонамент". Промяната влиза в сила мигновено.
+          </div>
         </div>
       </div>
       <div class="faq-item glass rounded-xl overflow-hidden fade-hidden">
@@ -447,8 +461,10 @@
           <span>Поддържа ли нощни смени и нестандартни графици?</span>
           <span class="faq-icon text-xl" style="color:var(--accent);">+</span>
         </button>
-        <div class="faq-answer px-6 pb-4 text-slate-400 text-sm leading-relaxed">
-          Да! Shifster автоматично разпознава нощните смени (преминаващи полунощ) и ги раздели правилно. Поддържа плаващ график, надбавки и почивки — платени и неплатени.
+        <div class="faq-answer text-slate-400 text-sm leading-relaxed">
+          <div class="px-6 pb-4">
+            Да! Shifster автоматично разпознава нощните смени (преминаващи полунощ) и ги раздели правилно. Поддържа плаващ график, надбавки и почивки — платени и неплатени.
+          </div>
         </div>
       </div>
       <div class="faq-item glass rounded-xl overflow-hidden fade-hidden">
@@ -456,8 +472,10 @@
           <span>Има ли мобилно приложение?</span>
           <span class="faq-icon text-xl" style="color:var(--accent);">+</span>
         </button>
-        <div class="faq-answer px-6 pb-4 text-slate-400 text-sm leading-relaxed">
-          Shifster е Progressive Web App (PWA) — добавяш го към началния екран на телефона си и работи като нативно приложение. iOS и Android се поддържат напълно.
+        <div class="faq-answer text-slate-400 text-sm leading-relaxed">
+          <div class="px-6 pb-4">
+            Shifster е Progressive Web App (PWA) — добавяш го към началния екран на телефона си и работи като нативно приложение. iOS и Android се поддържат напълно.
+          </div>
         </div>
       </div>
     </div>
@@ -477,17 +495,17 @@
     </p>
     <a href="/auth" class="inline-block px-12 py-4 rounded-full font-bold text-lg text-white transition-all hover:brightness-110 accent-glow"
        style="background:var(--accent);">Опитай безплатно →</a>
-    <p class="text-slate-500 text-sm mt-6">✓ 7-дневен пробен период &nbsp;·&nbsp; ✓ Без кредитна карта</p>
+    <p class="text-slate-500 text-sm mt-6">✓ 7-дневен пробен период</p>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════
   FOOTER
 ═══════════════════════════════════════════ -->
-<footer style="background:#080e1f; border-top:1px solid rgba(255,255,255,0.05);">
+<footer id="contact" style="background:#080e1f; border-top:1px solid rgba(255,255,255,0.05);">
   <div class="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
     <div class="flex items-center gap-3">
-      <img src="/icons/logo-nav.png" alt="Shifster" class="h-7 w-auto" onerror="this.style.display='none'">
+      <img src="/icons/logo-nav.png" alt="Shifster" class="h-9 w-auto" onerror="this.style.display='none'">
       <span class="font-extrabold text-lg text-white">Shifster</span>
     </div>
     <div class="flex items-center gap-6 text-sm text-slate-500">
@@ -530,6 +548,41 @@
       icon.textContent = '−';
     }
   }
+
+  // Mobile Menu Logic
+  const mobileToggle = document.getElementById('mobileMenuToggle');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const body = document.body;
+
+  function toggleMenu() {
+    const spans = mobileToggle.querySelectorAll('span');
+    const isOpen = mobileMenu.classList.contains('translate-x-0');
+
+    if (!isOpen) {
+      mobileMenu.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+      mobileMenu.classList.add('translate-x-0', 'opacity-100');
+      spans[0].style.transform = 'translateY(8px) rotate(45deg)';
+      spans[1].style.opacity = '0';
+      spans[2].style.transform = 'translateY(-8px) rotate(-45deg)';
+      body.style.overflow = 'hidden';
+    } else {
+      mobileMenu.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+      mobileMenu.classList.remove('translate-x-0', 'opacity-100');
+      spans[0].style.transform = 'none';
+      spans[1].style.opacity = '1';
+      spans[2].style.transform = 'none';
+      body.style.overflow = '';
+    }
+  }
+
+  mobileToggle.addEventListener('click', toggleMenu);
+  
+  // Close menu on link click
+  document.querySelectorAll('.mobile-nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (mobileMenu.classList.contains('translate-x-0')) toggleMenu();
+    });
+  });
 </script>
 </body>
 </html>
